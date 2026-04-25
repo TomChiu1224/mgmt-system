@@ -109,12 +109,8 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
 .task-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px 18px;margin-bottom:6px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;}
 .task-item:hover{border-color:var(--accent);box-shadow:var(--glow2);transform:translateX(3px);}
 .task-item.archived{opacity:0.5;border-style:dashed;}
-.task-item.due-overdue{background:rgba(200,30,30,0.22);border-color:rgba(200,30,30,0.5);}
-.task-item.due-overdue{background:rgba(200,30,30,0.18);border-color:rgba(200,30,30,0.5);}
-.task-item.due-urgent{background:rgba(255,100,100,0.12);border-color:rgba(255,100,100,0.35);}
-.task-item.due-soon{background:rgba(255,140,0,0.12);border-color:rgba(255,140,0,0.35);}
 .task-item.archived:hover{border-color:var(--text3);box-shadow:none;transform:none;}
-.task-dept-tag{min-width:44px;width:44px;height:44px;border-radius:8px;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;text-align:center;line-height:1.3;box-shadow:inset 0 1px 2px rgba(255,255,255,0.35),0 2px 4px rgba(0,0,0,0.3);}
+.task-dept-tag{min-width:44px;width:44px;height:44px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;text-align:center;line-height:1.3;}
 .dept-pick-btn{padding:10px 6px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:13px;font-weight:700;cursor:pointer;text-align:center;color:var(--text2);line-height:1.6;transition:all 0.2s;}
 .dept-pick-btn:hover{border-color:var(--accent);color:var(--accent);}
 .dept-pick-btn.selected{border-color:var(--accent);background:rgba(0,200,255,0.12);color:var(--accent);box-shadow:0 0 8px rgba(0,200,255,0.2);}
@@ -244,7 +240,35 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
 .modal-inner{margin:18vh auto;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:2rem;width:460px;max-width:92%;}
 .modal-inner h2{color:var(--text);}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js">
+function exportToExcel(){
+  if(!allTasks||!allTasks.length){alert("沒有資料可以匯出");return;}
+  const headers=["任務名稱","所屬單位","狀態","截止日期","負責人","任務說明"];
+  const rows=allTasks.map(t=>{
+    const due=t.due_date?new Date(parseInt(t.due_date)).toLocaleDateString("zh-TW"):"";
+    const assignee=t.assignees?.[0]?.username||t.assignees?.[0]?.email||"";
+    const desc=(t.description||"").replace(/\n/g," ").replace(/"/g,'""');
+    return [
+      '"'+(t.name||"").replace(/"/g,'""')+'"',
+      '"'+(t.listName||"")+'"',
+      '"'+(t.status?.status||"")+'"',
+      '"'+due+'"',
+      '"'+assignee+'"',
+      '"'+desc+'"'
+    ].join(",");
+  });
+  const bom="\uFEFF";
+  const csv=bom+headers.join(",")+"\n"+rows.join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  const today=new Date().toLocaleDateString("zh-TW").replace(/\//g,"-");
+  a.download="管理部任務備份_"+today+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
 </head>
 <body>
 
@@ -281,7 +305,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
 
 <div id="panel">
   <div class="panel-header">
-    <input id="panel-title" class="panel-title" style="border:none;background:transparent;outline:none;border-bottom:2px solid transparent;padding:2px 4px;border-radius:4px;width:100%;transition:border-color 0.2s;cursor:text;" onfocus="this.style.borderBottomColor='var(--accent)'" onblur="this.style.borderBottomColor='transparent'" placeholder="任務標題"/>
+    <div class="panel-title" id="panel-title">任務詳情</div>
     <button class="panel-close" onclick="closePanel()">✕</button>
   </div>
   <div class="panel-body">
@@ -291,12 +315,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
       </div>
       <div><div class="p-label">截止日期</div><input type="date" id="p-due"/></div>
     </div>
-    <div class="p-section"><div class="p-label">所屬單位</div>
-      <select id="p-dept" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
-        <option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option>
-      </select>
-    </div>
-    <div class="p-section"><div class="p-label">負責人</div><input type="text" id="p-assignee" placeholder="輸入負責人姓名（選填）" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;"/></div>
+    <div class="p-section"><div class="p-label">負責人</div><select id="p-assignee"><option value="">無</option></select></div>
     <div class="p-section">
       <div class="p-label" style="display:flex;align-items:center;justify-content:space-between">
         <span>任務說明</span>
@@ -307,12 +326,11 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
     </div>
     <div class="p-section">
       <div class="p-label">附件（圖片 / Word / PDF / Excel）</div>
-      <label for="file-input" class="attach-area" id="attach-drop-zone" style="display:block;cursor:pointer;text-align:center;">
-        <div style="font-size:28px;pointer-events:none;">📎</div>
-        <p style="pointer-events:none;">點此或拖曳上傳檔案<br><span style="font-size:11px">JPG、PNG、PDF、Word、Excel 均可</span></p>
-      </label>
-      <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onchange="handleUpload(event);this.value=''"/>
-      <div id="attach-upload-msg" style="display:none;color:#22c55e;font-size:13px;padding:4px 0;font-weight:600;">✅ 上傳成功！</div>
+      <div class="attach-area" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:28px">📎</div>
+        <p>點此上傳檔案<br><span style="font-size:11px">JPG、PNG、PDF、Word、Excel 均可</span></p>
+      </div>
+      <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onchange="handleUpload(event)"/>
       <div id="attach-list" class="attach-list"></div>
     </div>
   </div>
@@ -330,6 +348,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
     <div class="top-actions">
       <button onclick="cycleTheme()" id="theme-btn" style="font-size:12px;">🎨 黑色主題</button>
       <button onclick="document.getElementById('api-modal').style.display='block'" style="font-size:12px">⚙ API Key</button>
+      <button onclick="exportToExcel()" style="font-size:12px;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.5);color:#22c55e;">📥 匯出Excel</button>
       <button onclick="loadData()">↻ 重新載入</button>
     </div>
   </div>
@@ -462,16 +481,24 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
             <div><label class="form-label">負責人</label><input id="new-assignee-text" placeholder="輸入負責人姓名（選填）"/></div>
           </div>
           <div class="form-group"><label class="form-label">初始狀態</label><select id="new-status"><option value="待處理">待處理</option><option value="進行中">進行中</option></select></div>
-          <!-- 附件上傳（合併） -->
+          <!-- 照片上傳 -->
           <div class="form-group">
-            <label class="form-label">附件（照片 / PDF / Word / Excel）</label>
-            <div id="new-upload-zone" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';this._dropping=true;handleNewDrop(event);setTimeout(()=>this._dropping=false,200)" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color 0.2s;" onclick="if(!this._dropping)document.getElementById('new-all-input').click()">
-              <div style="font-size:28px">📎</div>
-              <p style="font-size:13px;color:var(--text2);margin-top:4px;">點此或拖曳上傳（圖片、PDF、Word、Excel 均可）</p>
+            <label class="form-label">附件照片（選填）</label>
+            <div onclick="document.getElementById('new-photo-input').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);">
+              <div style="font-size:28px">📷</div>
+              <p style="font-size:13px;color:var(--text2);margin-top:4px;">點此拍照或選擇圖片</p>
             </div>
-            <input type="file" id="new-all-input" style="display:none" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="handleNewAll(this)"/>
+            <input type="file" id="new-photo-input" style="display:none" accept="image/*" multiple onchange="handleNewPhotos(this)"/>
             <div id="new-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
-            <div id="new-file-preview" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">附加檔案（選填）</label>
+            <div onclick="document.getElementById('new-file-input').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);">
+              <div style="font-size:28px">📎</div>
+              <p style="font-size:13px;color:var(--text2);margin-top:4px;">點此上傳檔案（PDF、Word、Excel 均可）</p>
+            </div>
+            <input type="file" id="new-file-input" style="display:none" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="handleNewFiles(this)"/>
+            <div id="new-file-preview" style="display:flex;flex-direction:column;gap:6px;margin-top:10px;"></div>
           </div>
           <button id="submit-btn" class="btn-primary" onclick="submitTask()" style="width:100%;padding:14px;font-size:16px;font-weight:700;">✅ 建立任務</button>
         </div>
@@ -606,6 +633,9 @@ async function loadData(){
     }
     const md=await cuFetch("/team/"+teamId+"/member");
     allMembers=md.members||[];
+    const mBase='<option value="">無</option>'+allMembers.map(m=>`<option value="${m.user.id}">${m.user.username||m.user.email}</option>`).join("");
+    const passignee=document.getElementById("p-assignee");
+    if(passignee)passignee.innerHTML=mBase;
     const nassignee=document.getElementById("new-assignee");
     if(nassignee)nassignee.innerHTML='<option value="">請選擇...</option>'+allMembers.map(m=>`<option value="${m.user.id}">${m.user.username||m.user.email}</option>`).join("");
     allTasks=[];
@@ -642,18 +672,18 @@ function quickFilter(s){
 
 const scClass={"待處理":"s-pending","進行中":"s-inprog","待確認":"s-confirm","已完成":"s-done","擱置":"s-hold"};
 const deptColors={
-  "管理":{bg:"linear-gradient(145deg,#f5c400,#d4a800)",border:"#b88e00",color:"#5a3a00"},
-  "文書":{bg:"linear-gradient(145deg,#9b59f5,#7c3aed)",border:"#6d28d9",color:"#ffffff"},
-  "會計":{bg:"linear-gradient(145deg,#22c55e,#16a34a)",border:"#15803d",color:"#ffffff"},
-  "總務":{bg:"linear-gradient(145deg,#f97316,#ea580c)",border:"#c2410c",color:"#ffffff"},
-  "採購":{bg:"linear-gradient(145deg,#4ade80,#16a34a)",border:"#15803d",color:"#ffffff"},
-  "資訊":{bg:"linear-gradient(145deg,#3b82f6,#2563eb)",border:"#1d4ed8",color:"#ffffff"},
-  "保全":{bg:"linear-gradient(145deg,#ef4444,#dc2626)",border:"#b91c1c",color:"#ffffff"},
-  "水電":{bg:"linear-gradient(145deg,#06b6d4,#0891b2)",border:"#0e7490",color:"#ffffff"},
-  "木工":{bg:"linear-gradient(145deg,#b45309,#92400e)",border:"#78350f",color:"#ffffff"},
-  "園藝":{bg:"linear-gradient(145deg,#10b981,#059669)",border:"#047857",color:"#ffffff"},
-  "暫放":{bg:"linear-gradient(145deg,#64748b,#475569)",border:"#334155",color:"#ffffff"},
-  "污水":{bg:"linear-gradient(145deg,#4f86f7,#1d4ed8)",border:"#1e3a8a",color:"#ffffff"},
+  "管理":{bg:"rgba(0,200,255,0.15)",border:"rgba(0,200,255,0.5)",color:"#00c8ff"},
+  "文書":{bg:"rgba(168,85,247,0.15)",border:"rgba(168,85,247,0.5)",color:"#a855f7"},
+  "會計":{bg:"rgba(34,197,94,0.15)",border:"rgba(34,197,94,0.5)",color:"#22c55e"},
+  "總務":{bg:"rgba(251,146,60,0.15)",border:"rgba(251,146,60,0.5)",color:"#fb923c"},
+  "採購":{bg:"rgba(250,204,21,0.15)",border:"rgba(250,204,21,0.5)",color:"#facc15"},
+  "資訊":{bg:"rgba(59,130,246,0.15)",border:"rgba(59,130,246,0.5)",color:"#3b82f6"},
+  "保全":{bg:"rgba(239,68,68,0.15)",border:"rgba(239,68,68,0.5)",color:"#ef4444"},
+  "水電":{bg:"rgba(6,182,212,0.15)",border:"rgba(6,182,212,0.5)",color:"#06b6d4"},
+  "木工":{bg:"rgba(180,83,9,0.2)",border:"rgba(217,119,6,0.5)",color:"#d97706"},
+  "園藝":{bg:"rgba(16,185,129,0.15)",border:"rgba(16,185,129,0.5)",color:"#10b981"},
+  "暫放":{bg:"rgba(148,163,184,0.15)",border:"rgba(148,163,184,0.5)",color:"#94a3b8"},
+  "污水":{bg:"rgba(96,165,250,0.15)",border:"rgba(96,165,250,0.5)",color:"#60a5fa"},
 };
 
 function toggleArchive(){
@@ -675,15 +705,12 @@ function renderTasks(){
     if(search&&!t.name.toLowerCase().includes(search))return false;
     return true;
   });
-  // 依截止日期排序（最近在最上，無日期排最後），同日期再依部門名稱排
+  // 依截止日期排序，最近在最上，無日期排最後
   filtered.sort((a,b)=>{
-    const aD=a.due_date?parseInt(a.due_date):null;
-    const bD=b.due_date?parseInt(b.due_date):null;
-    if(!aD&&!bD)return (a.listName||'').localeCompare(b.listName||'','zh-TW');
-    if(!aD)return 1;
-    if(!bD)return -1;
-    if(aD!==bD)return aD-bD;
-    return (a.listName||'').localeCompare(b.listName||'','zh-TW');
+    if(!a.due_date&&!b.due_date)return 0;
+    if(!a.due_date)return 1;
+    if(!b.due_date)return -1;
+    return parseInt(a.due_date)-parseInt(b.due_date);
   });
   const archivedCount=allTasks.filter(t=>t.status?.status==="已完成").length;
   const c=document.getElementById("task-list");
@@ -699,14 +726,9 @@ function renderTasks(){
     const atts=t.attachments||[];
     const imgs=atts.filter(a=>imgExts.includes((a.title||"").split(".").pop().toLowerCase()));
     const files=atts.filter(a=>!imgExts.includes((a.title||"").split(".").pop().toLowerCase()));
-    const thumbsHTML=imgs.length?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">${imgs.map(a=>{const imgUrl=a.url+(a.url.includes('?')?'&':'?')+'token='+CU;return`<img src="${imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);" onmouseenter="showHoverPreview(event,'${imgUrl}')" onmouseleave="hideHoverPreview()" onclick="event.stopPropagation();zoomPhoto(event,'${imgUrl}')" onerror="this.style.display='none'"/>`;}).join("")}</div>`:'';
-    const filesHTML=files.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${files.map(a=>`<a href="${a.url+(a.url.includes('?')?'&':'?')+'token='+CU}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--border);border-radius:4px;padding:2px 8px;text-decoration:none;">📎 ${a.title||'附件'}</a>`).join("")}</div>`:'';
-    const nowMs=Date.now();
-    const dueMsRaw=t.due_date?parseInt(t.due_date):null;
-    const msDay=86400000;
-    const daysLeft=dueMsRaw?Math.round((dueMsRaw-nowMs)/msDay):null;
-    const urgentClass=(!isDone&&daysLeft!==null)?(daysLeft<0?' due-overdue':daysLeft<=3?' due-urgent':daysLeft<=7?' due-soon':''):'';
-    return`<div class="task-item${isDone?' archived':''}${urgentClass}" onclick="openPanel('${t.id}')">
+    const thumbsHTML=imgs.length?`<div class="task-thumb-row">${imgs.map(a=>`<img src="${a.url}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);" onmouseenter="showHoverPreview(event,'${a.url}')" onmouseleave="hideHoverPreview()" onclick="event.stopPropagation();zoomPhoto(event,'${a.url}')" onerror="this.style.display='none'"/>`).join("")}</div>`:'';
+    const filesHTML=files.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${files.map(a=>`<a href="${a.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;text-decoration:none;">📎 ${a.title||'附件'}</a>`).join("")}</div>`:'';
+    return`<div class="task-item${isDone?' archived':''}" onclick="openPanel('${t.id}')">
       <div class="task-dept-tag" style="background:${dc.bg};border-color:${dc.border};color:${dc.color};">${deptShort}</div>
       <div style="flex:1;min-width:0">
         <div class="task-name">${isDone?'📦 ':''}${t.name}</div>
@@ -714,9 +736,8 @@ function renderTasks(){
           ${due?`<span>📅 ${due}</span>`:'<span style="color:var(--text3)">未設截止日</span>'}
           ${assignee?`<span>👤 ${assignee}</span>`:''}
         </div>
-        ${filesHTML}
+        ${thumbsHTML}${filesHTML}
       </div>
-      ${thumbsHTML}
       <span class="status-badge ${sc}">${t.status?.status||"未知"}</span>
     </div>`;
   }).join("");
@@ -764,18 +785,13 @@ function renderKanban(){
       const sc=scClass[t.status?.status]||"s-pending";
       const due=t.due_date?new Date(parseInt(t.due_date)).toLocaleDateString("zh-TW"):"";
       const assignee=t.assignees?.[0]?.username||"";
-      const kdc=deptColors[t.listName]||{bg:"linear-gradient(145deg,#64748b,#475569)",border:"#334155",color:"#ffffff"};
       return`<div class="kanban-card" onclick="openPanel('${t.id}')">
-        <div style="display:flex;align-items:flex-start;gap:8px;">
-          <div class="task-dept-tag" style="background:${kdc.bg};border-color:${kdc.border};color:${kdc.color};min-width:36px;width:36px;height:36px;font-size:11px;">${t.listName}</div>
-          <div style="flex:1;min-width:0;">
-            <div class="kc-name">${t.name}</div>
-            <div class="kc-meta">
-              ${due?`<span>📅 ${due}</span>`:''}
-              ${assignee?`<span>👤 ${assignee}</span>`:''}
-              <span class="status-badge ${sc}" style="padding:1px 7px;font-size:10px;">${t.status?.status||''}</span>
-            </div>
-          </div>
+        <div class="kc-name">${t.name}</div>
+        <div class="kc-meta">
+          <span>📁 ${t.listName}</span>
+          ${due?`<span>📅 ${due}</span>`:''}
+          ${assignee?`<span>👤 ${assignee}</span>`:''}
+          <span class="status-badge ${sc}" style="padding:1px 7px;font-size:10px;">${t.status?.status||''}</span>
         </div>
       </div>`;
     }).join('');
@@ -894,14 +910,13 @@ async function openPanel(taskId){
   const task=allTasks.find(t=>t.id===taskId);
   if(!task)return;
   currentTaskId=taskId;
-  document.getElementById("panel-title").value=task.name;
+  document.getElementById("panel-title").textContent=task.name;
   document.getElementById("p-status").value=task.status?.status||"待處理";
-  document.getElementById("p-dept").value=task.listName||"";
   const desc=task.description||"";
   document.getElementById("p-desc").value=desc;
   renderDescView(desc);
   document.getElementById("p-due").value=task.due_date?new Date(parseInt(task.due_date)).toISOString().split("T")[0]:"";
-  document.getElementById("p-assignee").value=task.assignees?.[0]?.username||task.assignees?.[0]?.email||"";
+  document.getElementById("p-assignee").value=task.assignees?.[0]?.id||"";
   renderAttachments(task.attachments||[]);
   document.getElementById("overlay").style.display="block";
   document.getElementById("panel").classList.add("open");
@@ -953,13 +968,12 @@ function renderAttachments(attachments){
     const isImg=imgExts.includes(ext);
     const icon=ext==="pdf"?"📕":["doc","docx"].includes(ext)?"📘":["xls","xlsx"].includes(ext)?"📗":"📎";
     const sz=a.size?(a.size>1048576?(a.size/1048576).toFixed(1)+"MB":(a.size/1024).toFixed(0)+"KB"):"";
-    const imgUrl=a.url+(a.url.includes('?')?'&':'?')+'token='+CU;
     return`<div class="${isImg?'attach-item':'attach-item-row'}" ${isImg?`id="attach-${a.id}"`:''}>
       ${isImg?`<div style="position:relative;display:inline-block;">
-        <img src="${imgUrl}" class="attach-thumb" onmouseenter="showHoverPreview(event,'${imgUrl}')" onmouseleave="hideHoverPreview()" onclick="zoomPhoto(event,'${imgUrl}')" onerror="this.style.display='none'"/>
+        <img src="${a.url}" class="attach-thumb" onmouseenter="showHoverPreview(event,'${a.url}')" onmouseleave="hideHoverPreview()" onclick="zoomPhoto(event,'${a.url}')" onerror="this.style.display='none'"/>
         <button onclick="deleteAttach(event,'${a.id}')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(200,0,0,0.85);color:white;border:none;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">✕</button>
       </div>`:`<div class="attach-icon">${icon}</div>`}
-      <div class="attach-name"><a href="${imgUrl}" target="_blank">${a.title||"附件"}</a></div>
+      <div class="attach-name"><a href="${a.url}" target="_blank">${a.title||"附件"}</a></div>
       ${!isImg?`<div class="attach-size">${sz}</div><button onclick="deleteAttach(event,'${a.id}')" style="margin-left:auto;background:rgba(255,56,96,0.1);border-color:rgba(255,56,96,0.4);color:var(--danger);padding:3px 10px;font-size:12px;">刪除</button>`:''}
     </div>`;
   }).join("");
@@ -997,65 +1011,36 @@ async function deleteAttach(e,attachId){
   }catch(e){alert("刪除失敗："+e.message);}
 }
 
-function handleAttachDrop(e){
-  e.preventDefault();
-  handleUpload({target:{files:e.dataTransfer.files}});
-}
 async function handleUpload(event){
-  if(!currentTaskId){alert("請先開啟任務後再上傳附件");return;}
+  if(!currentTaskId)return;
   const files=event.target.files;
-  if(!files||!files.length)return;
+  if(!files.length)return;
   const btn=document.getElementById("save-btn");
   btn.textContent="上傳中...";btn.disabled=true;
-  let successCount=0;
   for(const file of files){
     const fd=new FormData();fd.append("attachment",file,file.name);
     try{
       const res=await fetch("https://api.clickup.com/api/v2/task/"+currentTaskId+"/attachment",{method:"POST",headers:{Authorization:CU},body:fd});
       const data=await res.json();
-      if(data.id){
-        const task=allTasks.find(t=>t.id===currentTaskId);
-        if(task){if(!task.attachments)task.attachments=[];task.attachments.push(data);renderAttachments(task.attachments);}
-        successCount++;
-      } else {
-        alert("上傳失敗："+JSON.stringify(data));
-      }
+      if(data.id){const task=allTasks.find(t=>t.id===currentTaskId);if(task){if(!task.attachments)task.attachments=[];task.attachments.push(data);renderAttachments(task.attachments);}}
     }catch(e){alert("上傳失敗："+e.message);}
   }
-  const fi=document.getElementById("file-input");if(fi)fi.value="";
-  btn.textContent="💾 儲存變更";btn.disabled=false;
-  // 只有真正成功才顯示提示
-  if(successCount>0){
-    const msg=document.getElementById("attach-upload-msg");
-    if(msg){msg.textContent="✅ 已成功上傳 "+successCount+" 個檔案！";msg.style.display="block";setTimeout(()=>msg.style.display="none",3000);}
-  }
+  event.target.value="";btn.textContent="💾 儲存變更";btn.disabled=false;
 }
 
 async function saveTask(){
   if(!currentTaskId)return;
   const btn=document.getElementById("save-btn");
   btn.textContent="儲存中...";btn.disabled=true;
-  const newDept=document.getElementById("p-dept").value;
   const status=document.getElementById("p-status").value;
-  const newTitle=document.getElementById("panel-title").value.trim()||"（無標題）";
   const desc=document.getElementById("p-desc").value;
   const due=document.getElementById("p-due").value;
-  const assigneeText=document.getElementById("p-assignee").value.trim();
-  const assigneeMember=assigneeText?allMembers.find(m=>(m.user.username||m.user.email||"").includes(assigneeText)):null;
-  const assigneeId=assigneeMember?String(assigneeMember.user.id):null;
+  const assigneeId=document.getElementById("p-assignee").value;
   try{
-    await cuFetch("/task/"+currentTaskId,{method:"PUT",body:JSON.stringify({name:newTitle,status,description:desc,due_date:due?new Date(due).getTime():null,assignees:assigneeId?{add:[parseInt(assigneeId)],rem:[]}:{add:[],rem:[]}})});
+    await cuFetch("/task/"+currentTaskId,{method:"PUT",body:JSON.stringify({status,description:desc,due_date:due?new Date(due).getTime():null,assignees:assigneeId?{add:[parseInt(assigneeId)],rem:[]}:{add:[],rem:[]}})});
     const task=allTasks.find(t=>t.id===currentTaskId);
-    // 如果部門有變更，移動到新清單
-    if(task&&newDept&&newDept!==task.listName){
-      const newList=allLists.find(l=>l.name===newDept);
-      if(newList){
-        await cuFetch("/task/"+currentTaskId,{method:"PUT",body:JSON.stringify({list_id:newList.id})});
-        task.listName=newDept;
-      }
-    }
-    if(task){task.name=newTitle;task.status={status};task.description=desc;task.due_date=due?String(new Date(due).getTime()):null;
-      if(assigneeId){const m=allMembers.find(m=>String(m.user.id)===String(assigneeId));task.assignees=m?[{id:m.user.id,username:m.user.username||m.user.email}]:[]}else if(assigneeText){task.assignees=[{username:assigneeText}];}else{task.assignees=[];}
+    if(task){task.status={status};task.description=desc;task.due_date=due?String(new Date(due).getTime()):null;
+      if(assigneeId){const m=allMembers.find(m=>String(m.user.id)===String(assigneeId));task.assignees=m?[{id:m.user.id,username:m.user.username||m.user.email}]:[]}else{task.assignees=[];}
     }
     updateStats();renderTasks();
     document.getElementById("save-ok").style.display="inline";
@@ -1136,27 +1121,8 @@ function pickDept(btn,dept){
   document.getElementById("new-dept-val").value=dept;
 }
 
-function handleNewDrop(e){
-  e.preventDefault();
-  document.getElementById('new-upload-zone').style.borderColor='var(--border2)';
-  const files=Array.from(e.dataTransfer.files);
-  const imgExts=['jpg','jpeg','png','gif','webp'];
-  files.forEach(file=>{
-    const ext=file.name.split('.').pop().toLowerCase();
-    if(imgExts.includes(ext)){processNewPhoto(file);}else{processNewFile(file);}
-  });
-}
-function handleNewAll(input){
-  const imgExts=['jpg','jpeg','png','gif','webp'];
+function handleNewPhotos(input){
   Array.from(input.files).forEach(file=>{
-    const ext=file.name.split('.').pop().toLowerCase();
-    if(imgExts.includes(ext)){processNewPhoto(file);}else{processNewFile(file);}
-  });
-  input.value='';
-}
-function processNewPhoto(file){
-  const fileArr=[file];
-  Array.from(fileArr).forEach(file=>{
     const reader=new FileReader();
     reader.onload=e=>{
       newPhotos.push({file,base64:e.target.result});
@@ -1167,9 +1133,8 @@ function processNewPhoto(file){
   });input.value="";
 }
 
-function processNewFile(file){
-  const fileArr=[file];
-  Array.from(fileArr).forEach(file=>{
+function handleNewFiles(input){
+  Array.from(input.files).forEach(file=>{
     newFiles.push(file);
     const icon=file.name.endsWith('.pdf')?'📕':file.name.match(/\.docx?$/)?'📘':file.name.match(/\.xlsx?$/)?'📗':'📎';
     const div=document.createElement("div");
@@ -1269,26 +1234,6 @@ async function sendChat(){
 }
 
 function quickChat(q){document.getElementById("chat-input").value=q;sendChat();}
-</script>
-<script>
-// 拖曳上傳附件（只處理拖曳，點擊由 label for 原生處理）
-document.addEventListener('DOMContentLoaded', function(){
-  const zone = document.getElementById('attach-drop-zone');
-  if(!zone) return;
-  zone.addEventListener('dragover', function(e){
-    e.preventDefault(); e.stopPropagation();
-    zone.style.opacity = '0.6';
-  });
-  zone.addEventListener('dragleave', function(){
-    zone.style.opacity = '1';
-  });
-  zone.addEventListener('drop', function(e){
-    e.preventDefault(); e.stopPropagation();
-    zone.style.opacity = '1';
-    // 拖曳時不觸發 label 的 for，直接呼叫上傳
-    handleUpload({target:{files: e.dataTransfer.files}});
-  });
-});
 </script>
 </body>
 </html>
