@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理部任務系統</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:#070d1a;color:#e8f0fe;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite;pointer-events:none;}
+@keyframes gridMove{0%{background-position:0 0;}100%{background-position:60px 60px;}}
+.bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,100,255,0.12) 0%,transparent 70%);top:-200px;left:-200px;animation:gm1 8s ease-in-out infinite alternate;pointer-events:none;}
+.bg-glow2{position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,200,255,0.08) 0%,transparent 70%);bottom:-150px;right:-150px;animation:gm2 10s ease-in-out infinite alternate;pointer-events:none;}
+@keyframes gm1{0%{transform:translate(0,0);}100%{transform:translate(100px,80px);}}
+@keyframes gm2{0%{transform:translate(0,0);}100%{transform:translate(-80px,-60px);}}
+.scanline{position:fixed;top:-100%;left:0;right:0;height:200%;background:linear-gradient(to bottom,transparent 0%,rgba(0,200,255,0.015) 50%,transparent 100%);animation:scan 6s linear infinite;pointer-events:none;z-index:1;}
+@keyframes scan{0%{top:-100%;}100%{top:100%;}}
+.container{position:relative;z-index:10;text-align:center;padding:40px 20px;width:100%;max-width:600px;}
+.logo{width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#0077ff,#00c8ff);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px;box-shadow:0 0 40px rgba(0,200,255,0.4),0 0 80px rgba(0,100,255,0.2);animation:logoPulse 3s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 40px rgba(0,200,255,0.4),0 0 80px rgba(0,100,255,0.2);}50%{box-shadow:0 0 60px rgba(0,200,255,0.6),0 0 120px rgba(0,100,255,0.3);}}
+h1{font-size:28px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,#00c8ff,#fff,#00c8ff);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite;margin-bottom:8px;}
+@keyframes shimmer{0%{background-position:0%;}100%{background-position:200%;}}
+.subtitle{font-size:13px;color:#4a6080;letter-spacing:3px;margin-bottom:48px;}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;}
+@media(max-width:480px){.cards{grid-template-columns:1fr;}}
+.card{display:block;text-decoration:none;background:rgba(13,21,38,0.8);border:1px solid rgba(0,200,255,0.2);border-radius:16px;padding:32px 20px;transition:all 0.3s ease;position:relative;overflow:hidden;cursor:pointer;}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,200,255,0.06),transparent);opacity:0;transition:opacity 0.3s;}
+.card:hover{border-color:rgba(0,200,255,0.6);box-shadow:0 0 30px rgba(0,200,255,0.2),inset 0 0 30px rgba(0,200,255,0.05);transform:translateY(-4px);}
+.card:hover::before{opacity:1;}
+.card:active{transform:translateY(-2px) scale(0.98);}
+.card-icon{font-size:48px;margin-bottom:16px;display:block;filter:drop-shadow(0 0 12px rgba(0,200,255,0.4));}
+.card-title{font-size:17px;font-weight:700;color:#e8f0fe;margin-bottom:8px;letter-spacing:1px;}
+.card-desc{font-size:12px;color:#4a6080;line-height:1.7;}
+.card-badge{position:absolute;top:12px;right:12px;font-size:10px;padding:3px 9px;border-radius:10px;font-weight:700;letter-spacing:0.5px;}
+.badge-admin{background:rgba(0,200,255,0.15);color:#00c8ff;border:1px solid rgba(0,200,255,0.3);}
+.badge-all{background:rgba(0,230,118,0.15);color:#00e676;border:1px solid rgba(0,230,118,0.3);}
+.footer{font-size:12px;color:#2a4060;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow2"></div>
+<div class="scanline"></div>
+<div class="container">
+  <div class="logo">🏢</div>
+  <h1>管理部任務系統</h1>
+  <p class="subtitle">MANAGEMENT TASK SYSTEM</p>
+  <div class="cards">
+    <a class="card" href="管理部任務系統.html">
+      <span class="card-badge badge-admin">主管</span>
+      <span class="card-icon">📊</span>
+      <div class="card-title">任務管理系統</div>
+      <div class="card-desc">查詢任務・時間看板<br>甘特圖・SOP・AI助理</div>
+    </a>
+    <a class="card" href="快速建立任務.html">
+      <span class="card-badge badge-all">同仁</span>
+      <span class="card-icon">⚡</span>
+      <div class="card-title">快速建立任務</div>
+      <div class="card-desc">手動輸入・AI智能分析<br>拍照上傳・一鍵建立</div>
+    </a>
+  </div>
+  <div class="footer">© 管理部 · 內部系統</div>
+</div>
+</body>
+</html>
