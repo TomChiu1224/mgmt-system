@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理部任務系統</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+:root{
+  --bg:#070d1a;--bg2:#0d1526;--bg3:#111e35;--bg4:#162240;
+  --accent:#00c8ff;--accent2:#0077ff;--accent3:#00ff88;
+  --warn:#ff9500;--danger:#ff3860;--ok:#00e676;
+  --text:#e8f0fe;--text2:#8fa8c8;--text3:#4a6080;
+  --border:#1e3050;--border2:#2a4060;
+  --glow:0 0 20px rgba(0,200,255,0.25);
+  --glow2:0 0 12px rgba(0,200,255,0.15);
+  --radius:10px;--radius2:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+button{cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text);border-radius:var(--radius2);padding:6px 14px;font-family:inherit;font-size:13px;transition:all 0.2s;}
+button:hover{background:var(--bg4);border-color:var(--accent);color:var(--accent);box-shadow:var(--glow2);}
+button:disabled{opacity:0.4;cursor:not-allowed;}
+input,select,textarea{border:1px solid var(--border);border-radius:var(--radius2);padding:8px 12px;font-family:inherit;font-size:14px;outline:none;width:100%;background:var(--bg2);color:var(--text);}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,200,255,0.15);}
+select option{background:var(--bg3);}
+textarea{resize:vertical;min-height:80px;}
+
+/* Login */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 50%,#0d2040 0%,var(--bg) 70%);}
+.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:2.5rem;width:340px;box-shadow:0 0 60px rgba(0,120,255,0.2);}
+.login-icon{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 1.2rem;box-shadow:0 0 24px rgba(0,200,255,0.4);}
+.login-box h1{font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;background:linear-gradient(90deg,var(--accent),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.login-box p{font-size:13px;color:var(--text2);margin-bottom:1.5rem;text-align:center;}
+.btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;padding:11px;font-size:14px;border-radius:8px;width:100%;font-weight:600;box-shadow:0 4px 16px rgba(0,120,255,0.3);}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(0,200,255,0.4);transform:translateY(-1px);color:#fff;}
+.err-msg{color:var(--danger);font-size:12px;margin-bottom:8px;}
+
+/* 白色主題 */
+body.theme-white{
+  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#f5f7fa;--bg4:#eaeff5;
+  --accent:#0077cc;--accent2:#005fa3;--accent3:#00a86b;
+  --warn:#e07b00;--danger:#cc2244;--ok:#008844;
+  --text:#1a2030;--text2:#4a5568;--text3:#a0aec0;
+  --border:#dde3ec;--border2:#c8d0dc;
+  --glow:0 0 20px rgba(0,120,204,0.12);
+  --glow2:0 0 12px rgba(0,120,204,0.08);
+}
+/* 暖色主題 */
+body.theme-warm{
+  --bg:#1a1208;--bg2:#241a0c;--bg3:#2e2010;--bg4:#382814;
+  --accent:#f5a623;--accent2:#e8870a;--accent3:#7dcc50;
+  --warn:#f5a623;--danger:#ff4d4d;--ok:#7dcc50;
+  --text:#f5ead8;--text2:#c4a97a;--text3:#7a6040;
+  --border:#3d2d14;--border2:#503c1e;
+  --glow:0 0 20px rgba(245,166,35,0.2);
+  --glow2:0 0 12px rgba(245,166,35,0.12);
+}
+#app{display:none;}
+body.theme-white input,body.theme-white select,body.theme-white textarea{background:#fff;color:#1a2030;}
+body.theme-white .attach-area{background:#f5f7fa;}
+body.theme-white .kanban-col{background:#f5f7fa;}
+body.theme-white .chat-box{background:#f5f7fa;}
+body.theme-white .msg-bubble.bot{background:#fff;color:#1a2030;}
+body.theme-white .p-desc-view{background:#f5f7fa;color:#1a2030;}
+body.theme-white .form-card{background:#fff;}
+body.theme-warm input,body.theme-warm select,body.theme-warm textarea{background:var(--bg3);color:var(--text);}
+body.theme-warm .kanban-col{background:var(--bg2);}
+body.theme-warm .chat-box{background:var(--bg3);}
+body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
+.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);}
+.top-bar h1{font-size:16px;font-weight:700;background:linear-gradient(90deg,var(--accent),#7ad4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;}
+.top-bar p{font-size:12px;color:var(--text3);}
+.top-actions{display:flex;gap:8px;}
+
+/* Main */
+.main-content{max-width:1200px;margin:0 auto;padding:20px 24px 40px;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card:nth-child(1)::before{background:linear-gradient(90deg,var(--warn),#ffcc00);}
+.stat-card:nth-child(2)::before{background:linear-gradient(90deg,var(--accent2),var(--accent));}
+.stat-card:nth-child(3)::before{background:linear-gradient(90deg,var(--danger),#ff6b9d);}
+.stat-card:hover{border-color:var(--accent);box-shadow:var(--glow2);transform:translateY(-2px);}
+.stat-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+.stat-num{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;}
+.stat-card:nth-child(1) .stat-num{color:var(--warn);}
+.stat-card:nth-child(2) .stat-num{color:var(--accent);}
+.stat-card:nth-child(3) .stat-num{color:var(--danger);}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;gap:2px;overflow-x:auto;}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:-1px;border-radius:0;white-space:nowrap;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-btn:hover{background:var(--bg2);color:var(--text);border-color:transparent;box-shadow:none;}
+
+/* Filters */
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filters input{flex:1;min-width:150px;}
+.filters select{width:auto;min-width:110px;}
+.btn-archive-toggle{font-size:12px;padding:6px 12px;background:var(--bg3);border-color:var(--border2);color:var(--text2);}
+
+/* Task List */
+.task-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:13px 18px;margin-bottom:6px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;}
+.task-item:hover{border-color:var(--accent);box-shadow:var(--glow2);transform:translateX(3px);}
+.task-item.archived{opacity:0.5;border-style:dashed;}
+.task-item.due-overdue{background:rgba(200,30,30,0.22);border-color:rgba(200,30,30,0.5);}
+.task-item.due-overdue{background:rgba(200,30,30,0.18);border-color:rgba(200,30,30,0.5);}
+.task-item.due-urgent{background:rgba(255,100,100,0.12);border-color:rgba(255,100,100,0.35);}
+.task-item.due-soon{background:rgba(255,140,0,0.12);border-color:rgba(255,140,0,0.35);}
+.task-item.archived:hover{border-color:var(--text3);box-shadow:none;transform:none;}
+.task-dept-tag{min-width:44px;width:44px;height:44px;border-radius:8px;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;text-align:center;line-height:1.3;box-shadow:inset 0 1px 2px rgba(255,255,255,0.35),0 2px 4px rgba(0,0,0,0.3);}
+.dept-pick-btn{padding:10px 6px;border:1px solid var(--border2);border-radius:8px;background:var(--bg3);font-size:13px;font-weight:700;cursor:pointer;text-align:center;color:var(--text2);line-height:1.6;transition:all 0.2s;}
+.dept-pick-btn:hover{border-color:var(--accent);color:var(--accent);}
+.dept-pick-btn.selected{border-color:var(--accent);background:rgba(0,200,255,0.12);color:var(--accent);box-shadow:0 0 8px rgba(0,200,255,0.2);}
+.task-thumb-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.dt-管理{background:#1a2a4a;color:#60a5fa;border-color:#2a4a7a;}
+.dt-文書{background:#1a3a2a;color:#34d399;border-color:#2a5a3a;}
+.dt-會計{background:#2a2a1a;color:#fbbf24;border-color:#4a4a1a;}
+.dt-總務{background:#2a1a2a;color:#c084fc;border-color:#4a1a4a;}
+.dt-採購{background:#2a1a1a;color:#f87171;border-color:#4a2a2a;}
+.dt-資訊{background:#1a2a2a;color:#22d3ee;border-color:#1a4a4a;}
+.dt-保全{background:#2a2010;color:#fb923c;border-color:#4a3010;}
+.dt-水電{background:#102030;color:#38bdf8;border-color:#103050;}
+.dt-木工{background:#201a10;color:#d4a574;border-color:#402a10;}
+.dt-園藝{background:#102010;color:#86efac;border-color:#104010;}
+.task-name{font-size:14px;font-weight:500;margin-bottom:3px;}
+.task-meta{font-size:12px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap;}
+.status-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.s-pending{background:rgba(255,149,0,0.15);color:var(--warn);border:1px solid rgba(255,149,0,0.3);}
+.s-inprog{background:rgba(0,200,255,0.12);color:var(--accent);border:1px solid rgba(0,200,255,0.3);}
+.s-confirm{background:rgba(255,56,96,0.12);color:var(--danger);border:1px solid rgba(255,56,96,0.3);}
+.s-done{background:rgba(0,230,118,0.12);color:var(--ok);border:1px solid rgba(0,230,118,0.3);}
+.s-hold{background:rgba(74,96,128,0.2);color:var(--text3);border:1px solid var(--border);}
+.empty-msg{text-align:center;padding:3rem;color:var(--text3);font-size:14px;background:var(--bg2);border-radius:var(--radius);border:1px dashed var(--border);}
+.footer-count{font-size:12px;color:var(--text3);text-align:right;margin-top:8px;}
+
+/* Kanban */
+.kanban-board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start;}
+@media(max-width:900px){.kanban-board{grid-template-columns:repeat(2,1fr);}}
+.kanban-col{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:160px;}
+.kanban-col-header{font-size:12px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;text-transform:uppercase;letter-spacing:0.8px;}
+.kanban-col-header .col-count{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:1px 7px;font-size:11px;color:var(--text2);}
+.kanban-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:all 0.2s;}
+.kanban-card:hover{border-color:var(--accent);box-shadow:var(--glow2);transform:translateY(-2px);}
+.kanban-card .kc-name{font-size:12px;font-weight:600;margin-bottom:6px;line-height:1.4;color:var(--text);}
+.kanban-card .kc-meta{font-size:11px;color:var(--text2);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.kanban-empty{text-align:center;padding:20px;color:var(--text3);font-size:12px;}
+
+/* Gantt */
+.gantt-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);}
+.gantt-header{display:flex;background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.gantt-label-col{width:100px;min-width:100px;flex-shrink:0;padding:10px 12px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;border-right:1px solid var(--border);}
+.gantt-timeline-header{flex:1;position:relative;height:36px;overflow:hidden;}
+.gantt-month-label{position:absolute;top:4px;font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.gantt-day-tick{position:absolute;bottom:0;width:1px;background:var(--border);height:8px;}
+.gantt-day-label{position:absolute;bottom:0;font-size:9px;color:var(--text3);transform:translateX(-50%);}
+.gantt-row{display:flex;border-bottom:1px solid var(--border);min-height:48px;}
+.gantt-row:last-child{border-bottom:none;}
+.gantt-row:hover{background:rgba(255,255,255,0.02);}
+.gantt-dept-label{width:100px;min-width:100px;flex-shrink:0;padding:8px 12px;font-size:12px;font-weight:700;color:var(--text2);border-right:1px solid var(--border);display:flex;align-items:center;}
+.gantt-bars{flex:1;position:relative;min-height:48px;}
+.gantt-grid-line{position:absolute;top:0;bottom:0;width:1px;background:var(--border);opacity:0.5;}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:var(--danger);opacity:0.8;z-index:5;}
+.gantt-today-line::after{content:'今';position:absolute;top:2px;left:3px;font-size:9px;color:var(--danger);font-weight:700;}
+.gantt-bar{position:absolute;height:22px;border-radius:4px;top:50%;transform:translateY(-50%);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;padding:0 7px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:3;min-width:6px;}
+.gantt-bar:hover{filter:brightness(1.3);z-index:6;box-shadow:0 2px 12px rgba(0,0,0,0.4);}
+.gantt-bar-pending{background:linear-gradient(90deg,rgba(255,149,0,0.7),rgba(255,149,0,0.5));color:#fff;border:1px solid rgba(255,149,0,0.5);}
+.gantt-bar-inprog{background:linear-gradient(90deg,rgba(0,200,255,0.7),rgba(0,119,255,0.5));color:#fff;border:1px solid rgba(0,200,255,0.5);}
+.gantt-bar-confirm{background:linear-gradient(90deg,rgba(255,56,96,0.7),rgba(255,56,96,0.5));color:#fff;border:1px solid rgba(255,56,96,0.5);}
+.gantt-bar-hold{background:rgba(74,96,128,0.4);color:var(--text2);border:1px solid var(--border2);}
+.gantt-no-date{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);background:var(--bg3);border:1px dashed var(--border2);border-radius:4px;padding:2px 8px;white-space:nowrap;}
+
+/* SOP */
+.sop-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:8px;}
+.sop-title{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--accent);}
+.sop-content{font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;max-height:180px;overflow-y:auto;}
+
+/* Chat */
+.chat-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);height:300px;overflow-y:auto;padding:16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;}
+.msg-row{display:flex;}
+.msg-row.user{justify-content:flex-end;}
+.msg-bubble{max-width:80%;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.6;white-space:pre-wrap;}
+.msg-bubble.bot{background:var(--bg4);border:1px solid var(--border2);color:var(--text);}
+.msg-bubble.user{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;}
+.chat-input-row{display:flex;gap:8px;margin-bottom:10px;}
+.chat-input-row input{flex:1;}
+.quick-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.quick-btn{font-size:12px;padding:5px 12px;background:var(--bg3);border-color:var(--border2);color:var(--accent);}
+.quick-btn:hover{background:rgba(0,200,255,0.1);}
+
+/* New Task Form */
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.6px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.alert-success{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:var(--radius2);padding:12px;color:var(--ok);font-size:14px;text-align:center;margin-bottom:16px;display:none;}
+.alert-error{background:rgba(255,56,96,0.1);border:1px solid rgba(255,56,96,0.3);border-radius:var(--radius2);padding:12px;color:var(--danger);font-size:14px;text-align:center;margin-bottom:16px;display:none;}
+
+/* Overlay & Panel */
+#overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;backdrop-filter:blur(2px);}
+#panel{position:fixed;top:0;right:-800px;width:780px;max-width:96vw;height:100vh;background:var(--bg2);z-index:201;border-left:1px solid var(--border2);box-shadow:-8px 0 40px rgba(0,0,0,0.5);transition:right 0.3s ease;display:flex;flex-direction:column;}
+#panel.open{right:0;}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;background:var(--bg3);}
+.panel-title{font-size:15px;font-weight:600;flex:1;margin-right:12px;line-height:1.4;color:var(--text);}
+.panel-close{background:none;border:none;font-size:18px;color:var(--text2);padding:0 4px;flex-shrink:0;}
+.panel-close:hover{color:var(--danger);background:rgba(255,56,96,0.1);border-color:transparent;box-shadow:none;}
+.panel-body{flex:1;overflow-y:auto;padding:20px;}
+.panel-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0;background:var(--bg3);}
+.panel-footer button{padding:9px 18px;font-size:13px;}
+.btn-save{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;font-weight:600;}
+.btn-save:hover{opacity:0.9;color:#fff;box-shadow:0 4px 16px rgba(0,200,255,0.3);}
+.p-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;}
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.p-section{margin-bottom:18px;}
+.attach-area{border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px;background:var(--bg3);}
+.attach-area:hover{border-color:var(--accent);background:rgba(0,200,255,0.05);}
+.attach-area p{font-size:13px;color:var(--text2);margin-top:4px;}
+.attach-list{display:flex;flex-direction:row;flex-wrap:wrap;gap:12px;}
+.attach-item{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px;overflow:visible;width:148px;}
+.attach-item-row{display:flex;flex-direction:row;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;overflow:visible;flex:1;min-width:200px;}
+.attach-thumb{width:126px;height:126px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:zoom-in;transition:opacity 0.15s;border:1px solid var(--border);}
+.attach-thumb:hover{opacity:0.85;}
+.attach-icon{width:42px;height:42px;background:var(--bg4);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.attach-name{font-size:12px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:128px;color:var(--accent);}
+.attach-name a{color:var(--accent);}
+.attach-size{font-size:11px;color:var(--text3);}
+.save-ok{font-size:13px;color:var(--ok);display:none;}
+
+/* Hover zoom */
+#img-hover-preview{display:none;position:fixed;z-index:500;pointer-events:none;border-radius:10px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.6);border:2px solid var(--border2);}
+#img-hover-preview img{width:360px;height:360px;object-fit:contain;background:#000;display:block;}
+#photo-zoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:999;align-items:center;justify-content:center;cursor:zoom-out;}
+#photo-zoom.show{display:flex;}
+#photo-zoom img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
+
+/* API Modal */
+#api-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:300;}
+.modal-inner{margin:18vh auto;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:2rem;width:460px;max-width:92%;}
+.modal-inner h2{color:var(--text);}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-icon">🏢</div>
+    <h1>管理部任務系統</h1>
+    <p>請輸入密碼進入系統</p>
+    <input type="password" id="pw-input" placeholder="密碼" onkeydown="if(event.key==='Enter')doLogin()" style="margin-bottom:10px"/>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <input type="checkbox" id="remember-pw" style="width:auto;margin:0;" />
+      <label for="remember-pw" style="font-size:13px;color:var(--text2);cursor:pointer;">記住密碼</label>
+    </div>
+    <div id="pw-err" class="err-msg" style="display:none">❌ 密碼錯誤，請重試</div>
+    <button class="btn-primary" onclick="doLogin()">登入系統</button>
+  </div>
+</div>
+
+<div id="api-modal">
+  <div class="modal-inner">
+    <h2 style="font-size:16px;margin-bottom:8px">設定 Claude API Key</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">前往 console.anthropic.com 取得 API Key</p>
+    <input id="api-key-input" placeholder="sk-ant-api03-..." style="margin-bottom:12px;font-family:monospace;font-size:12px"/>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" onclick="saveApiKey()" style="flex:1">儲存</button>
+      <button onclick="document.getElementById('api-modal').style.display='none'" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay" onclick="closePanel()"></div>
+<div id="photo-zoom" onclick="this.classList.remove('show')"><img id="photo-zoom-img" src=""></div>
+<div id="img-hover-preview"><img id="img-hover-img" src=""></div>
+
+<div id="panel">
+  <div class="panel-header">
+    <input id="panel-title" class="panel-title" style="border:none;background:transparent;outline:none;border-bottom:2px solid transparent;padding:2px 4px;border-radius:4px;width:100%;transition:border-color 0.2s;cursor:text;" onfocus="this.style.borderBottomColor='var(--accent)'" onblur="this.style.borderBottomColor='transparent'" placeholder="任務標題"/>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="p-grid">
+      <div><div class="p-label">狀態</div>
+        <select id="p-status"><option>待處理</option><option>進行中</option><option>待確認</option><option>已完成</option><option>擱置</option></select>
+      </div>
+      <div><div class="p-label">截止日期</div><input type="date" id="p-due"/></div>
+    </div>
+    <div class="p-section"><div class="p-label">所屬單位</div>
+      <select id="p-dept" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
+        <option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option>
+      </select>
+    </div>
+    <div class="p-section"><div class="p-label">負責人</div><input type="text" id="p-assignee" placeholder="輸入負責人姓名（選填）" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;"/></div>
+    <div class="p-section">
+      <div class="p-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>任務說明</span>
+        <button onclick="toggleDescEdit()" id="desc-toggle-btn" style="font-size:11px;padding:3px 10px;color:var(--accent);border-color:var(--accent)">✏️ 編輯</button>
+      </div>
+      <div id="p-desc-view" style="min-height:240px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px 14px;font-size:14px;line-height:1.7;cursor:pointer;color:var(--text);" onclick="toggleDescEdit()"></div>
+      <textarea id="p-desc" placeholder="輸入任務說明..." style="min-height:360px;display:none;background:var(--bg3);color:var(--text);"></textarea>
+    </div>
+    <div class="p-section">
+      <div class="p-label">附件（圖片 / Word / PDF / Excel）</div>
+      <label for="file-input" class="attach-area" id="attach-drop-zone" style="display:block;cursor:pointer;text-align:center;">
+        <div style="font-size:28px;pointer-events:none;">📎</div>
+        <p style="pointer-events:none;">點此或拖曳上傳檔案<br><span style="font-size:11px">JPG、PNG、PDF、Word、Excel 均可</span></p>
+      </label>
+      <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onchange="handleUpload(event);this.value=''"/>
+      <div id="attach-upload-msg" style="display:none;color:#22c55e;font-size:13px;padding:4px 0;font-weight:600;">✅ 上傳成功！</div>
+      <div id="attach-list" class="attach-list"></div>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button class="btn-save" id="save-btn" onclick="saveTask()">💾 儲存變更</button>
+    <span class="save-ok" id="save-ok">✓ 已儲存！</span>
+    <button onclick="archiveTask()" style="background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:var(--ok);">📦 結案封存</button>
+    <button onclick="closePanel()">取消</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="top-bar">
+    <div><h1>⬡ 管理部任務系統</h1><p id="task-count">載入中...</p></div>
+    <div class="top-actions">
+      <button onclick="cycleTheme()" id="theme-btn" style="font-size:12px;">🎨 黑色主題</button>
+      <button onclick="document.getElementById('api-modal').style.display='block'" style="font-size:12px">⚙ API Key</button>
+      <button onclick="exportToExcel()" style="font-size:12px;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.5);color:#22c55e;">📥 匯出Excel</button>
+      <button onclick="loadData()">↻ 重新載入</button>
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="stats">
+      <div class="stat-card" onclick="quickFilter('待處理')"><div class="stat-label">待處理</div><div class="stat-num" id="cnt-p">0</div></div>
+      <div class="stat-card" onclick="quickFilter('進行中')"><div class="stat-label">進行中</div><div class="stat-num" id="cnt-i">0</div></div>
+      <div class="stat-card" onclick="quickFilter('待確認')"><div class="stat-label">待確認</div><div class="stat-num" id="cnt-c">0</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tasks',this)">📋 任務查詢</button>
+      <button class="tab-btn" onclick="switchTab('kanban',this)">🗂 時間看板</button>
+      <button class="tab-btn" onclick="switchTab('gantt',this)">📊 甘特圖</button>
+      <button class="tab-btn" onclick="switchTab('sop',this)">📄 SOP文件</button>
+      <button class="tab-btn" onclick="switchTab('ai',this)">🤖 AI助理</button>
+      <button class="tab-btn" onclick="switchTab('new',this)">✏️ 新增任務</button>
+    </div>
+
+    <!-- 任務查詢 -->
+    <div id="tab-tasks">
+      <div class="filters">
+        <input id="search-input" placeholder="搜尋任務名稱..." oninput="renderTasks()"/>
+        <select id="list-filter" onchange="renderTasks()"><option value="all">全部清單</option></select>
+        <select id="status-filter" onchange="renderTasks()">
+          <option value="all">全部狀態</option>
+          <option>待處理</option><option>進行中</option><option>待確認</option><option>已完成</option><option>擱置</option>
+        </select>
+        <button class="btn-archive-toggle" id="archive-toggle-btn" onclick="toggleArchive()">📦 顯示已結案</button>
+      </div>
+      <div id="task-list"></div>
+      <div class="footer-count" id="task-footer"></div>
+    </div>
+
+    <!-- 時間看板 -->
+    <div id="tab-kanban" style="display:none">
+      <div class="kanban-board" style="grid-template-columns:repeat(5,1fr)">
+        <div class="kanban-col" style="border-top:2px solid var(--text3)">
+          <div class="kanban-col-header" style="color:var(--text2)">⚪ 待排程 <span class="col-count" id="kc-later-cnt">0</span></div>
+          <div id="kc-later"></div>
+        </div>
+        <div class="kanban-col" style="border-top:2px solid var(--danger)">
+          <div class="kanban-col-header" style="color:var(--danger)">🔴 今日/逾期 <span class="col-count" id="kc-today-cnt">0</span></div>
+          <div id="kc-today"></div>
+        </div>
+        <div class="kanban-col" style="border-top:2px solid var(--warn)">
+          <div class="kanban-col-header" style="color:var(--warn)">🟠 明日 <span class="col-count" id="kc-tomorrow-cnt">0</span></div>
+          <div id="kc-tomorrow"></div>
+        </div>
+        <div class="kanban-col" style="border-top:2px solid #f1c40f">
+          <div class="kanban-col-header" style="color:#f1c40f">🟡 近期 2-6天 <span class="col-count" id="kc-soon-cnt">0</span></div>
+          <div id="kc-soon"></div>
+        </div>
+        <div class="kanban-col" style="border-top:2px solid var(--accent)">
+          <div class="kanban-col-header" style="color:var(--accent)">🔵 7天以後 <span class="col-count" id="kc-future-cnt">0</span></div>
+          <div id="kc-future"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 甘特圖 -->
+    <div id="tab-gantt" style="display:none">
+      <div style="margin-bottom:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--text2)">圖例：</span>
+        <span style="font-size:11px;padding:2px 10px;border-radius:4px;" class="gantt-bar-pending">待處理</span>
+        <span style="font-size:11px;padding:2px 10px;border-radius:4px;" class="gantt-bar-inprog">進行中</span>
+        <span style="font-size:11px;padding:2px 10px;border-radius:4px;" class="gantt-bar-confirm">待確認</span>
+        <span style="font-size:11px;padding:2px 10px;border-radius:4px;" class="gantt-bar-hold">擱置</span>
+        <span style="font-size:11px;color:var(--text3);margin-left:8px;">🔴 紅線 = 今天</span>
+      </div>
+      <div class="gantt-wrap" id="gantt-wrap"></div>
+    </div>
+
+    <!-- SOP -->
+    <div id="tab-sop" style="display:none">
+      <div class="filters"><input id="sop-search" placeholder="搜尋SOP文件..." oninput="renderSOP()"/></div>
+      <div id="sop-list"></div>
+    </div>
+
+    <!-- AI -->
+    <div id="tab-ai" style="display:none">
+      <div class="chat-box" id="chat-box"></div>
+      <div class="chat-input-row">
+        <input id="chat-input" placeholder="輸入問題，按 Enter 送出..." onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button onclick="sendChat()" id="send-btn" class="btn-primary" style="width:auto;padding:8px 20px">送出</button>
+      </div>
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="quickChat('待確認任務有哪些？')">待確認任務？</button>
+        <button class="quick-btn" onclick="quickChat('進行中的任務？')">進行中任務？</button>
+        <button class="quick-btn" onclick="quickChat('今日需優先處理什麼？')">今日優先？</button>
+        <button class="quick-btn" onclick="quickChat('各清單任務數量統計')">任務統計</button>
+      </div>
+    </div>
+
+    <!-- 新增任務 -->
+    <div id="tab-new" style="display:none">
+      <!-- Mode Toggle -->
+      <div style="display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:5px;gap:5px;margin-bottom:16px;">
+        <button id="new-btn-manual" onclick="switchNewMode('manual')" style="flex:1;padding:12px;border-radius:8px;font-size:14px;font-weight:700;background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;box-shadow:0 4px 14px rgba(0,200,255,0.3);">✏️ 手動輸入</button>
+        <button id="new-btn-ai" onclick="switchNewMode('ai')" style="flex:1;padding:12px;border-radius:8px;font-size:14px;font-weight:700;background:transparent;color:var(--text2);border:none;">🤖 AI 智能建立</button>
+      </div>
+
+      <!-- 手動模式 -->
+      <div id="new-panel-manual">
+        <div class="form-card">
+          <div id="new-success" class="alert-success"></div>
+          <div id="new-error" class="alert-error"></div>
+          <!-- 部門大按鈕 -->
+          <div style="margin-bottom:16px;">
+            <div class="form-label" style="margin-bottom:10px;">部門 <span style="color:var(--danger)">*</span></div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;" id="dept-grid">
+              <button class="dept-pick-btn" onclick="pickDept(this,'管理')">🏢<br>管理</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'文書')">📄<br>文書</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'會計')">💰<br>會計</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'總務')">🔧<br>總務</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'採購')">🛒<br>採購</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'資訊')">💻<br>資訊</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'保全')">🔒<br>保全</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'水電')">💧<br>水電</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'木工')">🪚<br>木工</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'園藝')">🌿<br>園藝</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'暫放')">📦<br>暫放</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'污水')">🚰<br>污水</button>
+            </div>
+            <input type="hidden" id="new-dept-val"/>
+          </div>
+          <div class="form-group"><label class="form-label">任務名稱 <span style="color:var(--danger)">*</span></label><input id="new-name" placeholder="例如：更換一樓燈管"/></div>
+          <div class="form-group"><label class="form-label">任務說明（選填）</label><textarea id="new-desc" placeholder="補充說明細節..."></textarea></div>
+          <div class="form-grid">
+            <div><label class="form-label">截止日期</label><input id="new-due" type="date"/></div>
+            <div><label class="form-label">負責人</label><input id="new-assignee-text" placeholder="輸入負責人姓名（選填）"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">初始狀態</label><select id="new-status"><option value="待處理">待處理</option><option value="進行中">進行中</option></select></div>
+          <!-- 附件上傳（合併） -->
+          <div class="form-group">
+            <label class="form-label">附件（照片 / PDF / Word / Excel）</label>
+            <div id="new-upload-zone" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border2)';this._dropping=true;handleNewDrop(event);setTimeout(()=>this._dropping=false,200)" style="border:2px dashed var(--border2);border-radius:8px;padding:18px;text-align:center;cursor:pointer;background:var(--bg3);transition:border-color 0.2s;" onclick="if(!this._dropping)document.getElementById('new-all-input').click()">
+              <div style="font-size:28px">📎</div>
+              <p style="font-size:13px;color:var(--text2);margin-top:4px;">點此或拖曳上傳（圖片、PDF、Word、Excel 均可）</p>
+            </div>
+            <input type="file" id="new-all-input" style="display:none" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" onchange="handleNewAll(this)"/>
+            <div id="new-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+            <div id="new-file-preview" style="display:flex;flex-direction:column;gap:6px;margin-top:6px;"></div>
+          </div>
+          <button id="submit-btn" class="btn-primary" onclick="submitTask()" style="width:100%;padding:14px;font-size:16px;font-weight:700;">✅ 建立任務</button>
+        </div>
+      </div>
+
+      <!-- AI模式 -->
+      <div id="new-panel-ai" style="display:none">
+        <div class="form-card">
+          <div style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:14px;">🤖 AI 智能分析</div>
+          <div class="form-group">
+            <label class="form-label">說說你需要什麼</label>
+            <textarea id="ai-new-text" style="min-height:100px;border-color:#4c1d95;background:rgba(124,58,237,0.08);" placeholder="用說的方式描述就好，例如：&#10;「B棟廁所的水龍頭壞了，水一直滴，要趕快修，最好三天內處理」&#10;&#10;AI 會自動幫你填好所有欄位！"></textarea>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+              <span onclick="document.getElementById('ai-new-text').value='廚房冷氣不冷，需要請人保養檢查'" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">冷氣保養</span>
+              <span onclick="document.getElementById('ai-new-text').value='採購影印紙A4，需要20箱，下週前要到'" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">採購用品</span>
+              <span onclick="document.getElementById('ai-new-text').value='一樓走廊燈管壞了需要更換'" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3);border-radius:20px;padding:5px 12px;font-size:12px;cursor:pointer;">燈管更換</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">附件照片（選填，AI 會一起分析）</label>
+            <div onclick="document.getElementById('ai-photo-input').click()" style="border:2px dashed rgba(124,58,237,0.4);border-radius:8px;padding:16px;text-align:center;cursor:pointer;background:rgba(124,58,237,0.05);">
+              <div style="font-size:26px">📷</div>
+              <p style="font-size:13px;color:var(--text2);margin-top:4px;">點此拍照或選擇圖片</p>
+            </div>
+            <input type="file" id="ai-photo-input" style="display:none" accept="image/*" multiple onchange="handleAIPhotos(this)"/>
+            <div id="ai-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;"></div>
+          </div>
+          <button id="ai-analyze-btn" onclick="analyzeAndFill()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:16px;">🤖 AI 自動分析填入</button>
+          <!-- AI Result -->
+          <div id="ai-result-area" style="display:none;border:1px solid rgba(124,58,237,0.4);border-radius:10px;padding:16px;background:rgba(124,58,237,0.06);">
+            <div style="color:#a78bfa;font-weight:700;margin-bottom:12px;">✅ AI 分析完成！請確認後建立</div>
+            <div class="form-group"><label class="form-label">部門</label><select id="ai-res-dept" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"><option value="">請選擇</option><option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option></select></div>
+            <div class="form-group"><label class="form-label">任務名稱</label><input id="ai-res-name" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"/></div>
+            <div class="form-group"><label class="form-label">說明</label><textarea id="ai-res-desc" style="min-height:80px;border-color:#4c1d95;background:rgba(124,58,237,0.1);"></textarea></div>
+            <div class="form-group"><label class="form-label">截止日期</label><input type="date" id="ai-res-date" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"/></div>
+            <button onclick="submitAITask()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">✅ 確認建立任務</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL="https://script.google.com/macros/s/AKfycbz6vRE1uBAmn0uDZRY04FPQGY3Ogph4xeemfY8DoLbVM7gJ7XNSuPXXuEq_zf6OpAVbkw/exec";
+const APP_PW="admin1234";
+let CLAUDE_KEY="";
+try{CLAUDE_KEY=localStorage.getItem("mgmt_claude_key")||"";}catch(e){}
+let allTasks=[],allLists=[],allMembers=[],currentTaskId=null,showArchived=false;
+let chatHistory=[{role:"assistant",content:"您好！我是管理部AI助理。\n\n可以問我：\n• 「待確認任務有哪些？」\n• 「採購清單有什麼任務？」\n• 「今日優先處理什麼？」"}];
+
+async function gasGet(p){const r=await fetch(GAS_URL+"?"+new URLSearchParams(p));return r.json();}
+async function gasPost(d){const r=await fetch(GAS_URL,{method:"POST",body:JSON.stringify(d)});return r.json();}
+
+function cycleTheme(){
+  const body=document.body;
+  const btn=document.getElementById('theme-btn');
+  const themes=[
+    {cls:'',label:'🎨 黑色主題'},
+    {cls:'theme-white',label:'🎨 白色主題'},
+    {cls:'theme-warm',label:'🎨 暖色主題'}
+  ];
+  const cur=themes.findIndex(t=>t.cls===''?(!body.classList.contains('theme-white')&&!body.classList.contains('theme-warm')):body.classList.contains(t.cls));
+  const next=themes[(cur+1)%3];
+  body.classList.remove('theme-white','theme-warm');
+  if(next.cls)body.classList.add(next.cls);
+  btn.textContent=themes[(cur+2)%3].label;
+  try{localStorage.setItem('mgmt_theme',next.cls);}catch(e){}
+}
+
+function doLogin(){
+  var pw = document.getElementById("pw-input").value;
+  if(pw === "admin1234"){
+    document.getElementById("pw-err").style.display="none";
+    document.getElementById("login-screen").style.display="none";
+    document.getElementById("app").style.display="block";
+    try{var cb=document.getElementById("remember-pw");if(cb&&cb.checked)localStorage.setItem("mgmt_remembered","1");else localStorage.removeItem("mgmt_remembered");}catch(e){}
+    loadData();
+    renderChat();
+  } else {
+    document.getElementById("pw-err").style.display="block";
+    document.getElementById("pw-input").value="";
+  }
+}
+
+// 自動登入
+window.addEventListener('DOMContentLoaded',()=>{
+  try{
+    // 還原主題
+    const savedTheme=localStorage.getItem('mgmt_theme');
+    if(savedTheme){document.body.classList.add(savedTheme);}
+    const btn=document.getElementById('theme-btn');
+    if(btn){
+      if(savedTheme==='theme-white')btn.textContent='🎨 暖色主題';
+      else if(savedTheme==='theme-warm')btn.textContent='🎨 黑色主題';
+      else btn.textContent='🎨 白色主題';
+    }
+    // 清除舊版記憶，強制重新登入一次
+    const ver=localStorage.getItem("mgmt_ver");
+    if(ver!=="v3"){localStorage.removeItem("mgmt_remembered");localStorage.setItem("mgmt_ver","v3");}
+    if(localStorage.getItem("mgmt_remembered")==="1"){
+      const cb=document.getElementById("remember-pw");
+      if(cb)cb.checked=true;
+      document.getElementById("login-screen").style.display="none";
+      document.getElementById("app").style.display="block";
+      loadData();renderChat();
+    }
+  }catch(e){localStorage.clear();}
+});
+
+function saveApiKey(){
+  const k=document.getElementById("api-key-input").value.trim();
+  if(!k)return;CLAUDE_KEY=k;
+  try{localStorage.setItem("mgmt_claude_key",k);}catch(e){}
+  document.getElementById("api-modal").style.display="none";
+}
+
+async function loadData(){
+  document.getElementById("task-count").textContent="載入中...";
+  document.getElementById("task-list").innerHTML='<div class="empty-msg">正在載入資料...</div>';
+  try{
+    const result=await gasGet({action:"getTasks"});
+    allTasks=result.tasks||[];
+    const fixedLists=["管理","文書","會計","總務","採購","資訊","保全","水電","木工","園藝","暫放","污水"];
+    allLists=fixedLists.map(n=>({name:n,id:n}));
+    const lsel=document.getElementById("list-filter");
+    if(lsel){lsel.innerHTML='<option value="all">全部清單</option>';allLists.forEach(l=>lsel.innerHTML+=`<option value="${l.name}">${l.name}</option>`);}
+    allMembers=[];
+    updateStats();renderTasks();renderSOP();
+  }catch(e){document.getElementById("task-list").innerHTML='<div class="empty-msg">載入失敗：'+e.message+'</div>';}
+}
+
+function updateStats(){
+  document.getElementById("cnt-p").textContent=allTasks.filter(t=>t.status?.status==="待處理").length;
+  document.getElementById("cnt-i").textContent=allTasks.filter(t=>t.status?.status==="進行中").length;
+  document.getElementById("cnt-c").textContent=allTasks.filter(t=>t.status?.status==="待確認").length;
+}
+
+function quickFilter(s){
+  document.getElementById("status-filter").value=s;
+  switchTab("tasks",document.querySelector(".tab-btn"));
+  renderTasks();
+}
+
+const scClass={"待處理":"s-pending","進行中":"s-inprog","待確認":"s-confirm","已完成":"s-done","擱置":"s-hold"};
+const deptColors={
+  "管理":{bg:"linear-gradient(145deg,#f5c400,#d4a800)",border:"#b88e00",color:"#5a3a00"},
+  "文書":{bg:"linear-gradient(145deg,#9b59f5,#7c3aed)",border:"#6d28d9",color:"#ffffff"},
+  "會計":{bg:"linear-gradient(145deg,#22c55e,#16a34a)",border:"#15803d",color:"#ffffff"},
+  "總務":{bg:"linear-gradient(145deg,#f97316,#ea580c)",border:"#c2410c",color:"#ffffff"},
+  "採購":{bg:"linear-gradient(145deg,#4ade80,#16a34a)",border:"#15803d",color:"#ffffff"},
+  "資訊":{bg:"linear-gradient(145deg,#3b82f6,#2563eb)",border:"#1d4ed8",color:"#ffffff"},
+  "保全":{bg:"linear-gradient(145deg,#ef4444,#dc2626)",border:"#b91c1c",color:"#ffffff"},
+  "水電":{bg:"linear-gradient(145deg,#06b6d4,#0891b2)",border:"#0e7490",color:"#ffffff"},
+  "木工":{bg:"linear-gradient(145deg,#b45309,#92400e)",border:"#78350f",color:"#ffffff"},
+  "園藝":{bg:"linear-gradient(145deg,#10b981,#059669)",border:"#047857",color:"#ffffff"},
+  "暫放":{bg:"linear-gradient(145deg,#64748b,#475569)",border:"#334155",color:"#ffffff"},
+  "污水":{bg:"linear-gradient(145deg,#4f86f7,#1d4ed8)",border:"#1e3a8a",color:"#ffffff"},
+};
+
+function toggleArchive(){
+  showArchived=!showArchived;
+  const btn=document.getElementById("archive-toggle-btn");
+  btn.textContent=showArchived?"📦 隱藏已結案":"📦 顯示已結案";
+  renderTasks();
+}
+
+function renderTasks(){
+  const search=document.getElementById("search-input").value.toLowerCase();
+  const listF=document.getElementById("list-filter").value;
+  const statF=document.getElementById("status-filter").value;
+  let filtered=allTasks.filter(t=>{
+    const isDone=t.status?.status==="已完成";
+    if(!showArchived&&isDone)return false;
+    if(listF!=="all"&&t.listName!==listF)return false;
+    if(statF!=="all"&&t.status?.status!==statF)return false;
+    if(search&&!t.name.toLowerCase().includes(search))return false;
+    return true;
+  });
+  // 依截止日期排序（最近在最上，無日期排最後），同日期再依部門名稱排
+  filtered.sort((a,b)=>{
+    const aD=a.due_date?parseInt(a.due_date):null;
+    const bD=b.due_date?parseInt(b.due_date):null;
+    if(!aD&&!bD)return (a.listName||'').localeCompare(b.listName||'','zh-TW');
+    if(!aD)return 1;
+    if(!bD)return -1;
+    if(aD!==bD)return aD-bD;
+    return (a.listName||'').localeCompare(b.listName||'','zh-TW');
+  });
+  const archivedCount=allTasks.filter(t=>t.status?.status==="已完成").length;
+  const c=document.getElementById("task-list");
+  if(filtered.length===0){c.innerHTML='<div class="empty-msg">沒有符合條件的任務</div>';return;}
+  c.innerHTML=filtered.map(t=>{
+    const sc=scClass[t.status?.status]||"s-pending";
+    const isDone=t.status?.status==="已完成";
+    const due=t.due_date?new Date(parseInt(t.due_date)).toLocaleDateString("zh-TW"):"";
+    const assignee=t.assignees?.[0]?.username||"";
+    const deptShort=t.listName||"";
+    const dc=deptColors[deptShort]||{bg:"rgba(74,96,128,0.2)",border:"rgba(74,96,128,0.4)",color:"#8fa8c8"};
+    const imgExts=["jpg","jpeg","png","gif","webp"];
+    const atts=t.attachments||[];
+    const imgs=atts.filter(a=>imgExts.includes((a.title||"").split(".").pop().toLowerCase()));
+    const files=atts.filter(a=>!imgExts.includes((a.title||"").split(".").pop().toLowerCase()));
+    const thumbsHTML=imgs.length?`<div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">${imgs.map(a=>{const imgUrl=a.url;return`<img src="${imgUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);" onmouseenter="showHoverPreview(event,'${imgUrl}')" onmouseleave="hideHoverPreview()" onclick="event.stopPropagation();zoomPhoto(event,'${imgUrl}')" onerror="this.style.display='none'"/>`;}).join("")}</div>`:'';
+    const filesHTML=files.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;">${files.map(a=>`<a href="${a.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);background:transparent;border:1px solid var(--border);border-radius:4px;padding:2px 8px;text-decoration:none;">📎 ${a.title||'附件'}</a>`).join("")}</div>`:'';
+    const nowMs=Date.now();
+    const dueMsRaw=t.due_date?parseInt(t.due_date):null;
+    const msDay=86400000;
+    const daysLeft=dueMsRaw?Math.round((dueMsRaw-nowMs)/msDay):null;
+    const urgentClass=(!isDone&&daysLeft!==null)?(daysLeft<0?' due-overdue':daysLeft<=3?' due-urgent':daysLeft<=7?' due-soon':''):'';
+    return`<div class="task-item${isDone?' archived':''}${urgentClass}" onclick="openPanel('${t.id}')">
+      <div class="task-dept-tag" style="background:${dc.bg};border-color:${dc.border};color:${dc.color};">${deptShort}</div>
+      <div style="flex:1;min-width:0">
+        <div class="task-name">${isDone?'📦 ':''}${t.name}</div>
+        <div class="task-meta">
+          ${due?`<span>📅 ${due}</span>`:'<span style="color:var(--text3)">未設截止日</span>'}
+          ${assignee?`<span>👤 ${assignee}</span>`:''}
+        </div>
+        ${filesHTML}
+      </div>
+      ${thumbsHTML}
+      <span class="status-badge ${sc}">${t.status?.status||"未知"}</span>
+    </div>`;
+  }).join("");
+  const activeCount=allTasks.filter(t=>t.status?.status!=="已完成").length;
+  document.getElementById("task-footer").textContent="顯示 "+filtered.length+" 筆　共 "+activeCount+" 筆進行中　封存 "+archivedCount+" 筆　（點任務可編輯）";
+}
+
+function renderSOP(){
+  const search=document.getElementById("sop-search").value;
+  const sops=allTasks.filter(t=>t.listName==="文書"&&t.name.startsWith("SOP")&&(!search||t.name.includes(search)));
+  const c=document.getElementById("sop-list");
+  if(sops.length===0){c.innerHTML='<div class="empty-msg">尚無SOP文件</div>';return;}
+  c.innerHTML=sops.map(t=>`<div class="sop-item">
+    <div class="sop-title">📄 ${t.name}</div>
+    ${t.description?`<div class="sop-content">${t.description.slice(0,500)}${t.description.length>500?"...":""}</div>`:'<div style="font-size:13px;color:var(--text3)">（無說明內容）</div>'}
+  </div>`).join("");
+}
+
+function switchTab(tab,btn){
+  ["tasks","kanban","gantt","sop","ai","new"].forEach(id=>document.getElementById("tab-"+id).style.display="none");
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+tab).style.display="block";
+  if(btn)btn.classList.add("active");
+  if(tab==="kanban")renderKanban();
+  if(tab==="gantt")renderGantt();
+}
+
+function renderKanban(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const tomorrow=new Date(today);tomorrow.setDate(today.getDate()+1);
+  const in7=new Date(today);in7.setDate(today.getDate()+7);
+  const active=allTasks.filter(t=>t.status?.status!=="已完成");
+  const cols={later:[],today:[],tomorrow:[],soon:[],future:[]};
+  active.forEach(t=>{
+    if(!t.due_date){cols.later.push(t);return;}
+    const due=new Date(parseInt(t.due_date));due.setHours(0,0,0,0);
+    if(due<=today)cols.today.push(t);
+    else if(due.getTime()===tomorrow.getTime())cols.tomorrow.push(t);
+    else if(due<=in7)cols.soon.push(t);
+    else cols.future.push(t);
+  });
+  function makeCards(list){
+    if(!list.length)return'<div class="kanban-empty">無任務</div>';
+    return list.map(t=>{
+      const sc=scClass[t.status?.status]||"s-pending";
+      const due=t.due_date?new Date(parseInt(t.due_date)).toLocaleDateString("zh-TW"):"";
+      const assignee=t.assignees?.[0]?.username||"";
+      const kdc=deptColors[t.listName]||{bg:"linear-gradient(145deg,#64748b,#475569)",border:"#334155",color:"#ffffff"};
+      return`<div class="kanban-card" onclick="openPanel('${t.id}')">
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div class="task-dept-tag" style="background:${kdc.bg};border-color:${kdc.border};color:${kdc.color};min-width:36px;width:36px;height:36px;font-size:11px;">${t.listName}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="kc-name">${t.name}</div>
+            <div class="kc-meta">
+              ${due?`<span>📅 ${due}</span>`:''}
+              ${assignee?`<span>👤 ${assignee}</span>`:''}
+              <span class="status-badge ${sc}" style="padding:1px 7px;font-size:10px;">${t.status?.status||''}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  ['later','today','tomorrow','soon','future'].forEach(k=>{
+    document.getElementById('kc-'+k).innerHTML=makeCards(cols[k]);
+    document.getElementById('kc-'+k+'-cnt').textContent=cols[k].length;
+  });
+}
+
+function renderGantt(){
+  const depts=['管理','文書','會計','總務','採購','資訊','保全','水電','木工','園藝','暫放','污水'];
+  const active=allTasks.filter(t=>t.status?.status!=="已完成");
+  if(!active.length){document.getElementById('gantt-wrap').innerHTML='<div class="empty-msg">目前無任務資料</div>';return;}
+  const today=new Date();today.setHours(0,0,0,0);
+  let minDate=new Date(today);minDate.setDate(today.getDate()-3);
+  let maxDate=new Date(today);maxDate.setDate(today.getDate()+30);
+  active.forEach(t=>{
+    if(t.date_created){const d=new Date(parseInt(t.date_created));d.setHours(0,0,0,0);if(d<minDate)minDate=new Date(d);}
+    if(t.due_date){const d=new Date(parseInt(t.due_date));d.setHours(0,0,0,0);if(d>maxDate)maxDate=new Date(d);}
+  });
+  minDate.setDate(minDate.getDate()-2);
+  maxDate.setDate(maxDate.getDate()+3);
+  const totalDays=Math.max(1,Math.round((maxDate-minDate)/86400000));
+  const dayW=Math.max(24,Math.min(52,Math.floor(1000/totalDays)));
+  const totalW=dayW*totalDays;
+
+  // 台灣國定假日
+  const twHolidays=new Set(['2026-01-01','2026-01-02','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-23','2026-04-03','2026-04-04','2026-04-05','2026-04-06','2026-05-01','2026-05-31','2026-06-01','2026-09-17','2026-09-18','2026-09-19','2026-10-09','2026-10-10','2025-01-01','2025-02-28','2025-04-04','2025-04-05','2025-05-01','2025-10-10']);
+  function isHoliday(d){
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return twHolidays.has(key)||d.getDay()===0||d.getDay()===6;
+  }
+  const weekDays=['日','一','二','三','四','五','六'];
+
+  // Month row
+  let monthRow='',dayRow='';
+  let prevMonth=-1,prevYear=-1;
+  for(let i=0;i<totalDays;i++){
+    const d=new Date(minDate);d.setDate(minDate.getDate()+i);
+    const x=i*dayW;
+    const isHol=isHoliday(d);
+    const isToday=(d.getTime()===today.getTime());
+    const dayColor=isToday?'var(--danger)':isHol?'#ff7070':'var(--text2)';
+    const bgColor=isToday?'rgba(255,56,96,0.1)':isHol?'rgba(255,107,107,0.05)':'transparent';
+    if(d.getMonth()!==prevMonth||d.getFullYear()!==prevYear){
+      const mNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+      monthRow+=`<div style="position:absolute;left:${x}px;top:2px;font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;">${d.getFullYear()} ${mNames[d.getMonth()]}</div>`;
+      prevMonth=d.getMonth();prevYear=d.getFullYear();
+    }
+    dayRow+=`<div style="position:absolute;left:${x}px;width:${dayW}px;top:0;bottom:0;text-align:center;border-left:1px solid var(--border);background:${bgColor};display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <span style="font-size:${dayW>30?'11':'9'}px;font-weight:${isToday||isHol?'700':'400'};color:${dayColor};">${d.getDate()}</span>
+      <span style="font-size:9px;color:${dayColor};">${weekDays[d.getDay()]}</span>
+    </div>`;
+  }
+
+  const barClasses={"待處理":"gantt-bar-pending","進行中":"gantt-bar-inprog","待確認":"gantt-bar-confirm","擱置":"gantt-bar-hold"};
+  let rows='';
+  depts.forEach(dept=>{
+    const deptTasks=active.filter(t=>t.listName===dept);
+    if(!deptTasks.length)return;
+    const noDate=deptTasks.filter(t=>!t.due_date);
+    const withD=deptTasks.filter(t=>t.due_date);
+    const rowH=Math.max(52,(withD.length||1)*36+16);
+    let bars='';
+    withD.forEach((t,i)=>{
+      const due=new Date(parseInt(t.due_date));due.setHours(0,0,0,0);
+      const created=t.date_created?new Date(parseInt(t.date_created)):new Date(today);created.setHours(0,0,0,0);
+      const startD=created<minDate?new Date(minDate):new Date(created);
+      const endD=due>maxDate?new Date(maxDate):new Date(due);
+      const startX=Math.round((startD-minDate)/86400000)*dayW;
+      const endX=Math.round((endD-minDate)/86400000)*dayW+dayW;
+      const w=Math.max(dayW,endX-startX);
+      const top=8+i*36;
+      const daysLeft=Math.round((due-today)/86400000);
+      const isUrgent=daysLeft<=3&&daysLeft>=0;
+      const isOverdue=daysLeft<0;
+      let barStyle='',barClass=barClasses[t.status?.status]||'gantt-bar-pending';
+      if(isOverdue||isUrgent){
+        barStyle='background:linear-gradient(90deg,rgba(255,56,96,0.9),rgba(255,56,96,0.65));border:1px solid rgba(255,56,96,0.8);color:#fff;box-shadow:0 0 10px rgba(255,56,96,0.35);';
+        barClass='';
+      }
+      const label=t.name.length>22?t.name.slice(0,20)+'…':t.name;
+      const icon=isOverdue?'🔴 ':isUrgent?'⚠️ ':'';
+      bars+=`<div class="gantt-bar ${barClass}" style="left:${startX}px;width:${w}px;top:${top}px;transform:none;${barStyle}" onclick="openPanel('${t.id}')" title="${t.name}\n建立：${created.toLocaleDateString('zh-TW')}\n截止：${due.toLocaleDateString('zh-TW')}\n狀態：${t.status?.status}">${icon}${label}</div>`;
+    });
+    // holiday bg + today line
+    let holBg='',todayLine='';
+    for(let i=0;i<totalDays;i++){
+      const d=new Date(minDate);d.setDate(minDate.getDate()+i);
+      if(isHoliday(d))holBg+=`<div style="position:absolute;left:${i*dayW}px;top:0;bottom:0;width:${dayW}px;background:rgba(255,100,100,0.04);"></div>`;
+    }
+    const todayX=Math.round((today-minDate)/86400000)*dayW+dayW/2;
+    if(todayX>=0&&todayX<=totalW)todayLine=`<div style="position:absolute;left:${todayX}px;top:0;bottom:0;width:2px;background:var(--danger);opacity:0.85;z-index:5;"></div>`;
+    let noDateHTML='';
+    if(noDate.length)noDateHTML=`<div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);background:var(--bg3);border:1px dashed var(--border2);border-radius:4px;padding:3px 9px;z-index:4;">📌 未設截止日：${noDate.map(t=>t.name).join('、')}</div>`;
+    rows+=`<div class="gantt-row" style="min-height:${rowH}px;">
+      <div class="gantt-dept-label">${dept}</div>
+      <div class="gantt-bars" style="height:${rowH}px;width:${totalW}px;min-width:${totalW}px;">${holBg}${todayLine}${bars}${noDateHTML}</div>
+    </div>`;
+  });
+  if(!rows)rows='<div style="padding:30px;text-align:center;color:var(--text3);">目前無未完成任務</div>';
+  document.getElementById('gantt-wrap').innerHTML=`
+    <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg3);">
+      <div style="width:100px;min-width:100px;flex-shrink:0;"></div>
+      <div style="position:relative;height:20px;width:${totalW}px;overflow:visible;">${monthRow}</div>
+    </div>
+    <div style="display:flex;position:sticky;top:0;z-index:10;background:var(--bg3);border-bottom:2px solid var(--border2);">
+      <div class="gantt-label-col" style="font-size:11px;color:var(--text2);">部門</div>
+      <div style="position:relative;height:46px;width:${totalW}px;min-width:${totalW}px;">${dayRow}</div>
+    </div>
+    ${rows}`;
+}
+
+async function openPanel(taskId){
+  const task=allTasks.find(t=>t.id===taskId);
+  if(!task)return;
+  currentTaskId=taskId;
+  document.getElementById("panel-title").value=task.name;
+  document.getElementById("p-status").value=task.status?.status||"待處理";
+  document.getElementById("p-dept").value=task.listName||"";
+  const desc=task.description||"";
+  document.getElementById("p-desc").value=desc;
+  renderDescView(desc);
+  document.getElementById("p-due").value=task.due_date?new Date(parseInt(task.due_date)).toISOString().split("T")[0]:"";
+  document.getElementById("p-assignee").value=task.assignees?.[0]?.username||task.assignees?.[0]?.email||"";
+  renderAttachments(task.attachments||[]);
+  document.getElementById("overlay").style.display="block";
+  document.getElementById("panel").classList.add("open");
+  document.getElementById("save-ok").style.display="none";
+  document.getElementById("p-desc").style.display="none";
+  document.getElementById("p-desc-view").style.display="block";
+  document.getElementById("desc-toggle-btn").textContent="✏️ 編輯";
+  try{
+    if(task.attachments){renderAttachments(task.attachments);}else{renderAttachments([]);}
+  }catch(e){}
+}
+
+function renderDescView(text){
+  const view=document.getElementById("p-desc-view");
+  if(!text){view.innerHTML='<span style="color:var(--text3);font-size:13px">（無說明，點此編輯）</span>';return;}
+  try{
+    view.innerHTML=marked.parse(text);
+    view.querySelectorAll("h1,h2,h3").forEach(el=>{el.style.fontSize="15px";el.style.fontWeight="600";el.style.margin="8px 0 4px";el.style.color="var(--accent)";});
+    view.querySelectorAll("p").forEach(el=>{el.style.margin="4px 0";});
+    view.querySelectorAll("ul,ol").forEach(el=>{el.style.paddingLeft="20px";el.style.margin="4px 0";});
+    view.querySelectorAll("hr").forEach(el=>{el.style.border="none";el.style.borderTop="1px solid var(--border)";el.style.margin="8px 0";});
+    view.querySelectorAll("strong").forEach(el=>{el.style.fontWeight="700";el.style.color="var(--accent)";});
+    view.querySelectorAll("table").forEach(el=>{el.style.borderCollapse="collapse";el.style.width="100%";el.style.fontSize="13px";});
+    view.querySelectorAll("td,th").forEach(el=>{el.style.border="1px solid var(--border)";el.style.padding="4px 8px";});
+  }catch(e){view.textContent=text;}
+}
+
+function toggleDescEdit(){
+  const ta=document.getElementById("p-desc");
+  const view=document.getElementById("p-desc-view");
+  const btn=document.getElementById("desc-toggle-btn");
+  if(ta.style.display==="none"){ta.style.display="block";view.style.display="none";btn.textContent="👁 預覽";ta.focus();}
+  else{renderDescView(ta.value);ta.style.display="none";view.style.display="block";btn.textContent="✏️ 編輯";}
+}
+
+function closePanel(){
+  document.getElementById("overlay").style.display="none";
+  document.getElementById("panel").classList.remove("open");
+  currentTaskId=null;
+}
+
+function renderAttachments(attachments){
+  const c=document.getElementById("attach-list");
+  if(!attachments||!attachments.length){c.innerHTML="";return;}
+  const imgExts=["jpg","jpeg","png","gif","webp"];
+  c.innerHTML=attachments.map(a=>{
+    const ext=(a.title||"").split(".").pop().toLowerCase();
+    const isImg=imgExts.includes(ext);
+    const icon=ext==="pdf"?"📕":["doc","docx"].includes(ext)?"📘":["xls","xlsx"].includes(ext)?"📗":"📎";
+    const sz=a.size?(a.size>1048576?(a.size/1048576).toFixed(1)+"MB":(a.size/1024).toFixed(0)+"KB"):"";
+    const imgUrl=a.url;
+    return`<div class="${isImg?'attach-item':'attach-item-row'}" ${isImg?`id="attach-${a.id}"`:''}>
+      ${isImg?`<div style="position:relative;display:inline-block;">
+        <img src="${imgUrl}" class="attach-thumb" onmouseenter="showHoverPreview(event,'${imgUrl}')" onmouseleave="hideHoverPreview()" onclick="zoomPhoto(event,'${imgUrl}')" onerror="this.style.display='none'"/>
+        <button onclick="deleteAttach(event,'${a.id}')" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(200,0,0,0.85);color:white;border:none;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>`:`<div class="attach-icon">${icon}</div>`}
+      <div class="attach-name"><a href="${imgUrl}" target="_blank">${a.title||"附件"}</a></div>
+      ${!isImg?`<div class="attach-size">${sz}</div><button onclick="deleteAttach(event,'${a.id}')" style="margin-left:auto;background:rgba(255,56,96,0.1);border-color:rgba(255,56,96,0.4);color:var(--danger);padding:3px 10px;font-size:12px;">刪除</button>`:''}
+    </div>`;
+  }).join("");
+}
+
+function showHoverPreview(e,url){
+  const p=document.getElementById("img-hover-preview");
+  document.getElementById("img-hover-img").src=url;
+  p.style.display="block";
+  const rect=e.target.getBoundingClientRect();
+  const pw=370,ph=370;
+  let left=rect.right+12,top=rect.top+rect.height/2-ph/2;
+  if(left+pw>window.innerWidth-10)left=rect.left-pw-12;
+  if(top<10)top=10;
+  if(top+ph>window.innerHeight-10)top=window.innerHeight-ph-10;
+  p.style.left=left+"px";p.style.top=top+"px";
+}
+function hideHoverPreview(){document.getElementById("img-hover-preview").style.display="none";}
+function zoomPhoto(e,url){
+  e.stopPropagation();
+  document.getElementById("photo-zoom-img").src=url;
+  document.getElementById("photo-zoom").classList.add("show");
+  document.addEventListener("keydown",function esc(ev){if(ev.key==="Escape"){document.getElementById("photo-zoom").classList.remove("show");document.removeEventListener("keydown",esc);}});
+}
+
+async function deleteAttach(e,attachId){
+  e.stopPropagation();
+  if(!confirm("確定要刪除這個附件？"))return;
+  try{
+    const task=allTasks.find(t=>t.id===currentTaskId);if(task){task.attachments=(task.attachments||[]).filter(a=>a.id!==attachId);await gasPost({action:"updateTask",id:currentTaskId,attachments:JSON.stringify(task.attachments)});}
+    const el=document.getElementById("attach-"+attachId);
+    if(el)el.remove();
+    const task=allTasks.find(t=>t.id===currentTaskId);
+    if(task&&task.attachments)task.attachments=task.attachments.filter(a=>a.id!==attachId);
+  }catch(e){alert("刪除失敗："+e.message);}
+}
+
+function handleAttachDrop(e){
+  e.preventDefault();
+  handleUpload({target:{files:e.dataTransfer.files}});
+}
+async function handleUpload(event){
+  if(!currentTaskId){alert("請先開啟任務後再上傳");return;}
+  const files=event.target.files;
+  if(!files||!files.length)return;
+  const btn=document.getElementById("save-btn");
+  const msg=document.getElementById("attach-upload-msg");
+  btn.textContent="上傳中...";btn.disabled=true;
+  if(msg)msg.style.display="none";
+  let successCount=0;
+  for(const file of files){
+    try{
+      const reader=new FileReader();
+      const fileData=await new Promise(res=>{reader.onload=e=>res(e.target.result);reader.readAsDataURL(file);});
+      const base64=fileData.split(",")[1];
+      const data=await gasPost({action:"uploadFile",taskId:currentTaskId,fileName:file.name,fileBase64:base64,mimeType:file.type||"application/octet-stream"});
+      if(data.success){
+        const task=allTasks.find(t=>t.id===currentTaskId);
+        const attach={id:data.fileId,title:file.name,url:data.fileUrl};
+        if(task){if(!task.attachments)task.attachments=[];task.attachments.push(attach);renderAttachments(task.attachments);}
+        await gasPost({action:"updateTask",id:currentTaskId,attachments:JSON.stringify(task?task.attachments:[])});
+        successCount++;
+      }else{alert("上傳失敗："+JSON.stringify(data));}
+    }catch(e){alert("上傳失敗："+e.message);}
+  }
+  const fi=document.getElementById("file-input");if(fi)fi.value="";
+  btn.textContent="💾 儲存變更";btn.disabled=false;
+  if(successCount>0&&msg){msg.textContent="✅ 已成功上傳 "+successCount+" 個檔案！";msg.style.display="block";setTimeout(()=>msg.style.display="none",3000);}
+}
+
+async function saveTask(){
+  if(!currentTaskId)return;
+  const btn=document.getElementById("save-btn");
+  btn.textContent="儲存中...";btn.disabled=true;
+  const newDept=document.getElementById("p-dept").value;
+  const newTitle=document.getElementById("panel-title").value.trim()||"（無標題）";
+  const status=document.getElementById("p-status").value;
+  const desc=document.getElementById("p-desc").value;
+  const due=document.getElementById("p-due").value;
+  const assigneeText=document.getElementById("p-assignee").value.trim();
+  try{
+    await gasPost({action:"updateTask",id:currentTaskId,name:newTitle,listName:newDept,status,description:desc,due_date:due||"",assignee:assigneeText});
+    const task=allTasks.find(t=>t.id===currentTaskId);
+    if(task){task.name=newTitle;task.listName=newDept;task.status={status};task.description=desc;task.due_date=due?String(new Date(due).getTime()):null;task.assignees=assigneeText?[{username:assigneeText}]:[];}
+    updateStats();renderTasks();
+    document.getElementById("save-ok").style.display="inline";
+    setTimeout(()=>document.getElementById("save-ok").style.display="none",2500);
+  }catch(e){alert("儲存失敗："+e.message);}
+  btn.textContent="💾 儲存變更";btn.disabled=false;
+}
+
+async function archiveTask(){
+  if(!currentTaskId)return;
+  const task=allTasks.find(t=>t.id===currentTaskId);
+  if(!task)return;
+  if(!confirm(`確定結案封存「${task.name}」？
+封存後將標記為「已完成」並從主列表隱藏。`))return;
+  try{
+    await gasPost({action:"updateTask",id:currentTaskId,status:"已完成"});
+    task.status={status:"已完成"};updateStats();renderTasks();closePanel();
+  }catch(e){alert("封存失敗："+e.message);}
+}
+
+async function submitTask(){
+  const dept=document.getElementById("new-dept-val").value;
+  const name=document.getElementById("new-name").value.trim();
+  const desc=document.getElementById("new-desc").value.trim();
+  const due=document.getElementById("new-due").value;
+  const assigneeText=document.getElementById("new-assignee-text")?document.getElementById("new-assignee-text").value.trim():"";
+  const statusVal=document.getElementById("new-status").value;
+  const errEl=document.getElementById("new-error");const sucEl=document.getElementById("new-success");
+  errEl.style.display=sucEl.style.display="none";
+  if(!dept){errEl.textContent="請選擇部門";errEl.style.display="block";return;}
+  if(!name){errEl.textContent="請輸入任務名稱";errEl.style.display="block";return;}
+  const btn=document.getElementById("submit-btn");btn.disabled=true;btn.textContent="送出中...";
+  try{
+    const data=await gasPost({action:"createTask",name,listName:dept,status:statusVal,due_date:due||"",assignee:assigneeText,description:desc});
+    if(data.success){
+      const newTask={id:data.id,name,listName:dept,status:{status:statusVal},due_date:due?String(new Date(due).getTime()):null,assignees:assigneeText?[{username:assigneeText}]:[],description:desc,attachments:[]};
+      allTasks.push(newTask);
+      sucEl.textContent="✅ 任務建立成功！";sucEl.style.display="block";
+      document.getElementById("new-name").value="";document.getElementById("new-desc").value="";
+      document.getElementById("new-due").value="";document.getElementById("new-dept-val").value="";
+      document.getElementById("new-photo-preview").innerHTML="";
+      const nfp=document.getElementById("new-file-preview");if(nfp)nfp.innerHTML="";
+      newPhotos=[];newFiles=[];updateStats();renderTasks();
+    }else{errEl.textContent="建立失敗："+JSON.stringify(data);errEl.style.display="block";}
+  }catch(e){errEl.textContent="建立失敗："+e.message;errEl.style.display="block";}
+  btn.disabled=false;btn.textContent="✅ 建立任務";
+}
+
+function renderChat(){
+  const box=document.getElementById("chat-box");if(!box)return;
+  box.innerHTML=chatHistory.map(m=>`<div class="msg-row ${m.role==="user"?"user":""}"><div class="msg-bubble ${m.role==="user"?"user":"bot"}">${m.content}</div></div>`).join("");
+  box.scrollTop=box.scrollHeight;
+}
+
+async function sendChat(){
+  if(!CLAUDE_KEY){document.getElementById("api-modal").style.display="block";return;}
+  const input=document.getElementById("chat-input");const msg=input.value.trim();if(!msg)return;
+  input.value="";document.getElementById("send-btn").disabled=true;
+  chatHistory.push({role:"user",content:msg});renderChat();
+  const summary=allTasks.length?allTasks.map(t=>`任務：${t.name} / 清單：${t.listName} / 狀態：${t.status?.status||"未知"}`).join("\n"):"目前沒有任務資料";
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":CLAUDE_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:1000,system:`你是管理部AI助理。今天${new Date().toLocaleDateString("zh-TW")}。任務：\n${summary}\n請用繁體中文簡潔回答，不用Markdown符號。`,messages:chatHistory.slice(-8)})});
+    const data=await res.json();
+    chatHistory.push({role:"assistant",content:data.content?.[0]?.text||(data.error?"錯誤："+data.error.message:"無法回應")});
+  }catch(e){chatHistory.push({role:"assistant",content:"連線錯誤："+e.message});}
+  document.getElementById("send-btn").disabled=false;renderChat();
+}
+
+function quickChat(q){document.getElementById("chat-input").value=q;sendChat();}
+</script>
+<script>
+// 拖曳上傳附件（只處理拖曳，點擊由 label for 原生處理）
+document.addEventListener('DOMContentLoaded', function(){
+  const zone = document.getElementById('attach-drop-zone');
+  if(!zone) return;
+  zone.addEventListener('dragover', function(e){
+    e.preventDefault(); e.stopPropagation();
+    zone.style.opacity = '0.6';
+  });
+  zone.addEventListener('dragleave', function(){
+    zone.style.opacity = '1';
+  });
+  zone.addEventListener('drop', function(e){
+    e.preventDefault(); e.stopPropagation();
+    zone.style.opacity = '1';
+    // 拖曳時不觸發 label 的 for，直接呼叫上傳
+    handleUpload({target:{files: e.dataTransfer.files}});
+  });
+});
+</script>
+
+<script>
+function exportToExcel(){
+  try{
+    var tasks=typeof allTasks!=="undefined"?allTasks:[];
+    if(!tasks||!tasks.length){alert("沒有資料可以匯出");return;}
+    var headers=["任務名稱","所屬單位","狀態","截止日期","負責人","任務說明"];
+    var rows=tasks.map(function(t){
+      var due=t.due_date?new Date(parseInt(t.due_date)).toLocaleDateString("zh-TW"):"";
+      var assignee=(t.assignees&&t.assignees[0])?(t.assignees[0].username||""):"";
+      var desc=(t.description||"").replace(/
+/g," ").replace(/"/g,"''");
+      return ['"'+(t.name||"").replace(/"/g,"''")+'"','"'+(t.listName||"")+'"','"'+(t.status&&t.status.status||"")+'"','"'+due+'"','"'+assignee+'"','"'+desc+'"'].join(",");
+    });
+    var csv="﻿"+headers.join(",")+"
+"+rows.join("
+");
+    var blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;
+    a.download="管理部任務備份_"+new Date().toLocaleDateString("zh-TW").replace(/\//g,"-")+".csv";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert("✅ 匯出成功！共 "+tasks.length+" 筆任務");
+  }catch(e){alert("匯出失敗："+e.message);}
+}
+</script>
+</body>
+</html>
