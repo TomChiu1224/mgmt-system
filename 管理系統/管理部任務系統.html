@@ -662,7 +662,7 @@ function renderTasks(){
   const statF=document.getElementById("status-filter").value;
   let filtered=allTasks.filter(t=>{
     const isDone=t.status?.status==="已完成";
-    if(!showArchived&&isDone)return false;
+    if(!showArchived&&isDone&&statF!=="已完成")return false;
     if(listF!=="all"&&t.listName!==listF)return false;
     if(statF!=="all"&&t.status?.status!==statF)return false;
     if(search&&!t.name.toLowerCase().includes(search))return false;
@@ -670,6 +670,9 @@ function renderTasks(){
   });
   // 依截止日期排序（最近在最上，無日期排最後），同日期再依部門名稱排
   filtered.sort((a,b)=>{
+    const aIsDone=a.status?.status==="已完成";
+    const bIsDone=b.status?.status==="已完成";
+    if(aIsDone!==bIsDone)return aIsDone?1:-1;
     const aD=a.due_date?parseInt(a.due_date):null;
     const bD=b.due_date?parseInt(b.due_date):null;
     if(!aD&&!bD)return (a.listName||'').localeCompare(b.listName||'','zh-TW');
