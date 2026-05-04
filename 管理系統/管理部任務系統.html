@@ -243,6 +243,16 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
 #api-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:300;}
 .modal-inner{margin:18vh auto;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:2rem;width:460px;max-width:92%;}
 .modal-inner h2{color:var(--text);}
+@keyframes alert-pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,56,96,0.9),0 0 0 0 rgba(255,56,96,0.5);border-color:rgba(255,56,96,0.9);}
+  50%{box-shadow:0 0 0 8px rgba(255,56,96,0.3),0 0 20px 4px rgba(255,56,96,0.4);border-color:rgba(255,56,96,1);}
+  100%{box-shadow:0 0 0 0 rgba(255,56,96,0.9),0 0 0 0 rgba(255,56,96,0.5);border-color:rgba(255,56,96,0.9);}
+}
+.task-item.task-alert{
+  animation:alert-pulse 1.2s ease-in-out infinite;
+  border-width:2px;
+  background:rgba(255,56,96,0.08)!important;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 </head>
@@ -334,6 +344,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
     <span class="save-ok" id="save-ok">✓ 已儲存！</span>
     <button onclick="archiveTask()" style="background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:var(--ok);">📦 結案封存</button>
     <button onclick="deleteTask()" style="background:rgba(255,56,96,0.1);border-color:rgba(255,56,96,0.4);color:var(--danger);">🗑️ 刪除任務</button>
+    <button id="alert-btn" onclick="toggleAlert()" style="background:rgba(255,56,96,0.1);border-color:rgba(255,56,96,0.4);color:var(--danger);">🔔 醒目提醒</button>
     <button onclick="closePanel()">取消</button>
   </div>
 </div>
@@ -537,6 +548,27 @@ let CLAUDE_KEY="";
 try{CLAUDE_KEY=localStorage.getItem("mgmt_claude_key")||"";}catch(e){}
 let allTasks=[],allLists=[],allMembers=[],currentTaskId=null,showArchived=false;
 let newPhotos=[],newFiles=[],aiPhotos=[],aiFiles=[],aiPhotoBase64=[];
+let alertedTasks=new Set();
+try{const saved=localStorage.getItem("mgmt_alerted");if(saved)JSON.parse(saved).forEach(id=>alertedTasks.add(id));}catch(e){}
+function saveAlerted(){try{localStorage.setItem("mgmt_alerted",JSON.stringify([...alertedTasks]));}catch(e){}}
+function toggleAlert(){
+  if(!currentTaskId)return;
+  const btn=document.getElementById("alert-btn");
+  if(alertedTasks.has(currentTaskId)){
+    alertedTasks.delete(currentTaskId);
+    btn.textContent="🔔 醒目提醒";
+    btn.style.background="rgba(255,56,96,0.1)";
+    btn.style.borderColor="rgba(255,56,96,0.4)";
+    btn.style.color="var(--danger)";
+  }else{
+    alertedTasks.add(currentTaskId);
+    btn.textContent="🔕 取消提醒";
+    btn.style.background="rgba(255,56,96,0.35)";
+    btn.style.borderColor="rgba(255,56,96,0.8)";
+    btn.style.color="#fff";
+  }
+  saveAlerted();renderTasks();
+}
 let chatHistory=[{role:"assistant",content:"您好！我是管理部AI助理。\n\n可以問我：\n• 「待確認任務有哪些？」\n• 「採購清單有什麼任務？」\n• 「今日優先處理什麼？」"}];
 
 async function gasGet(p){const r=await fetch(GAS_URL+"?"+new URLSearchParams(p));return r.json();}
@@ -702,7 +734,8 @@ function renderTasks(){
     const msDay=86400000;
     const daysLeft=dueMsRaw?Math.round((dueMsRaw-nowMs)/msDay):null;
     const urgentClass=(!isDone&&daysLeft!==null)?(daysLeft<0?' due-overdue':daysLeft<=3?' due-urgent':daysLeft<=7?' due-soon':''):'';
-    return`<div class="task-item${isDone?' archived':''}${urgentClass}" onclick="openPanel('${t.id}')">
+    const isAlerted=alertedTasks.has(t.id);
+    return`<div class="task-item${isDone?' archived':''}${urgentClass}${isAlerted?' task-alert':''}" onclick="openPanel('${t.id}')">
       <div class="task-dept-tag" style="background:${dc.bg};border-color:${dc.border};color:${dc.color};">${deptShort}</div>
       <div style="flex:1;min-width:0">
         <div class="task-name">${isDone?'📦 ':''}${t.name}</div>
@@ -902,6 +935,7 @@ async function openPanel(taskId){
   document.getElementById("overlay").style.display="block";
   document.getElementById("panel").classList.add("open");
   document.getElementById("save-ok").style.display="none";
+  const ab=document.getElementById("alert-btn");if(ab){if(alertedTasks.has(taskId)){ab.textContent="🔕 取消提醒";ab.style.background="rgba(255,56,96,0.35)";ab.style.borderColor="rgba(255,56,96,0.8)";ab.style.color="#fff";}else{ab.textContent="🔔 醒目提醒";ab.style.background="rgba(255,56,96,0.1)";ab.style.borderColor="rgba(255,56,96,0.4)";ab.style.color="var(--danger)";}}
   document.getElementById("p-desc").style.display="none";
   document.getElementById("p-desc-view").style.display="block";
   document.getElementById("desc-toggle-btn").textContent="✏️ 編輯";
