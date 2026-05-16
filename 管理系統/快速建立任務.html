@@ -555,6 +555,7 @@
         <button class="dept-btn" onclick="selectDept(this,'園藝')"><span class="di">🌿</span>園藝</button>
         <button class="dept-btn" onclick="selectDept(this,'暫放')"><span class="di">📦</span>暫放</button>
         <button class="dept-btn" onclick="selectDept(this,'污水')"><span class="di">🚰</span>污水</button>
+        <button class="dept-btn" onclick="selectDept(this,'環保')"><span class="di">🍃</span>環保</button>
       </div>
       <input type="hidden" id="manual-dept">
     </div>
@@ -665,6 +666,7 @@
             <option>管理</option><option>文書</option><option>會計</option>
             <option>總務</option><option>採購</option><option>資訊</option>
             <option>保全</option><option>水電</option><option>木工</option><option>園藝</option>
+            <option>暫放</option><option>污水</option><option>環保</option>
           </select>
         </div>
         <div class="result-field">
@@ -923,7 +925,7 @@ async function analyzeWithAI() {
 
   try {
     const today = new Date().toISOString().split('T')[0];
-    const deptList = '管理、文書、會計、總務、採購、資訊、保全、水電、木工、園藝、暫放、污水';
+    const deptList = '管理、文書、會計、總務、採購、資訊、保全、水電、木工、園藝、暫放、污水、環保';
 
     const prompt = `你是一個任務管理助理。根據以下描述，幫我整理成結構化的任務資訊。
 

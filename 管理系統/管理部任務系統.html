@@ -316,7 +316,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
     </div>
     <div class="p-section"><div class="p-label">所屬單位</div>
       <select id="p-dept" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;">
-        <option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option>
+        <option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option><option>環保</option>
       </select>
     </div>
     <div class="p-section"><div class="p-label">負責人</div><input type="text" id="p-assignee" placeholder="輸入負責人姓名（選填）" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:13px;"/></div>
@@ -478,6 +478,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
               <button class="dept-pick-btn" onclick="pickDept(this,'園藝')">🌿<br>園藝</button>
               <button class="dept-pick-btn" onclick="pickDept(this,'暫放')">📦<br>暫放</button>
               <button class="dept-pick-btn" onclick="pickDept(this,'污水')">🚰<br>污水</button>
+              <button class="dept-pick-btn" onclick="pickDept(this,'環保')">🍃<br>環保</button>
             </div>
             <input type="hidden" id="new-dept-val"/>
           </div>
@@ -529,7 +530,7 @@ body.theme-warm .msg-bubble.bot{background:var(--bg4);color:var(--text);}
           <!-- AI Result -->
           <div id="ai-result-area" style="display:none;border:1px solid rgba(124,58,237,0.4);border-radius:10px;padding:16px;background:rgba(124,58,237,0.06);">
             <div style="color:#a78bfa;font-weight:700;margin-bottom:12px;">✅ AI 分析完成！請確認後建立</div>
-            <div class="form-group"><label class="form-label">部門</label><select id="ai-res-dept" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"><option value="">請選擇</option><option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option></select></div>
+            <div class="form-group"><label class="form-label">部門</label><select id="ai-res-dept" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"><option value="">請選擇</option><option>管理</option><option>文書</option><option>會計</option><option>總務</option><option>採購</option><option>資訊</option><option>保全</option><option>水電</option><option>木工</option><option>園藝</option><option>暫放</option><option>污水</option><option>環保</option></select></div>
             <div class="form-group"><label class="form-label">任務名稱</label><input id="ai-res-name" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"/></div>
             <div class="form-group"><label class="form-label">說明</label><textarea id="ai-res-desc" style="min-height:80px;border-color:#4c1d95;background:rgba(124,58,237,0.1);"></textarea></div>
             <div class="form-group"><label class="form-label">截止日期</label><input type="date" id="ai-res-date" style="border-color:#4c1d95;background:rgba(124,58,237,0.1);"/></div>
@@ -643,7 +644,7 @@ async function loadData(){
   try{
     const result=await gasGet({action:"getTasks"});
     allTasks=result.tasks||[];
-    const fixedLists=["管理","文書","會計","總務","採購","資訊","保全","水電","木工","園藝","暫放","污水"];
+    const fixedLists=["管理","文書","會計","總務","採購","資訊","保全","水電","木工","園藝","暫放","污水","環保"];
     allLists=fixedLists.map(n=>({name:n,id:n}));
     const lsel=document.getElementById("list-filter");
     if(lsel){lsel.innerHTML='<option value="all">全部清單</option>';allLists.forEach(l=>lsel.innerHTML+=`<option value="${l.name}">${l.name}</option>`);}
@@ -679,6 +680,7 @@ const deptColors={
   "園藝":{bg:"linear-gradient(145deg,#10b981,#059669)",border:"#047857",color:"#ffffff"},
   "暫放":{bg:"linear-gradient(145deg,#ec4899,#db2777)",border:"#be185d",color:"#ffffff"},
   "污水":{bg:"linear-gradient(145deg,#4f46e5,#3730a3)",border:"#312e81",color:"#ffffff"},
+  "環保":{bg:"linear-gradient(145deg,#15803d,#14532d)",border:"#0f3a1f",color:"#ffffff"},
 };
 
 function toggleArchive(){
@@ -816,7 +818,7 @@ function renderKanban(){
 }
 
 function renderGantt(){
-  const depts=['管理','文書','會計','總務','採購','資訊','保全','水電','木工','園藝','暫放','污水'];
+  const depts=['管理','文書','會計','總務','採購','資訊','保全','水電','木工','園藝','暫放','污水','環保'];
   const active=allTasks.filter(t=>t.status?.status!=="已完成");
   if(!active.length){document.getElementById('gantt-wrap').innerHTML='<div class="empty-msg">目前無任務資料</div>';return;}
   const today=new Date();today.setHours(0,0,0,0);
