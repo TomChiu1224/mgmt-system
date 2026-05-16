@@ -10,8 +10,8 @@
   --bg:#070d1a;--bg2:#0d1526;--bg3:#111e35;--bg4:#162240;
   --accent:#00c8ff;--accent2:#0077ff;--accent3:#00ff88;
   --warn:#ff9500;--danger:#ff3860;--ok:#00e676;
-  --text:#e8f0fe;--text2:#8fa8c8;--text3:#4a6080;
-  --border:#1e3050;--border2:#2a4060;
+  --text:#f5fafe;--text2:#b8cce0;--text3:#7892b0;
+  --border:#34507a;--border2:#46638e;
   --glow:0 0 20px rgba(0,200,255,0.25);
   --glow2:0 0 12px rgba(0,200,255,0.15);
   --radius:10px;--radius2:6px;
@@ -51,13 +51,13 @@ body.theme-white{
 }
 /* 暖色主題 */
 body.theme-warm{
-  --bg:#1a1208;--bg2:#241a0c;--bg3:#2e2010;--bg4:#382814;
-  --accent:#f5a623;--accent2:#e8870a;--accent3:#7dcc50;
-  --warn:#f5a623;--danger:#ff4d4d;--ok:#7dcc50;
-  --text:#f5ead8;--text2:#c4a97a;--text3:#7a6040;
-  --border:#3d2d14;--border2:#503c1e;
-  --glow:0 0 20px rgba(245,166,35,0.2);
-  --glow2:0 0 12px rgba(245,166,35,0.12);
+  --bg:#4a3220;--bg2:#5a3e2a;--bg3:#6b4a36;--bg4:#7c5742;
+  --accent:#ffb84d;--accent2:#ff9933;--accent3:#9ee06b;
+  --warn:#ffb84d;--danger:#ff6b6b;--ok:#9ee06b;
+  --text:#fff5e0;--text2:#e8c896;--text3:#b08866;
+  --border:#7c5742;--border2:#8e6c54;
+  --glow:0 0 20px rgba(255,184,77,0.25);
+  --glow2:0 0 12px rgba(255,184,77,0.15);
 }
 #app{display:none;}
 body.theme-white input,body.theme-white select,body.theme-white textarea{background:#fff;color:#1a2030;}
@@ -587,7 +587,7 @@ function cycleTheme(){
   const next=themes[(cur+1)%3];
   body.classList.remove('theme-white','theme-warm');
   if(next.cls)body.classList.add(next.cls);
-  btn.textContent=themes[(cur+2)%3].label;
+  btn.textContent=next.label;
   try{localStorage.setItem('mgmt_theme',next.cls);}catch(e){}
 }
 
@@ -614,9 +614,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(savedTheme){document.body.classList.add(savedTheme);}
     const btn=document.getElementById('theme-btn');
     if(btn){
-      if(savedTheme==='theme-white')btn.textContent='🎨 暖色主題';
-      else if(savedTheme==='theme-warm')btn.textContent='🎨 黑色主題';
-      else btn.textContent='🎨 白色主題';
+      if(savedTheme==='theme-white')btn.textContent='🎨 白色主題';
+      else if(savedTheme==='theme-warm')btn.textContent='🎨 暖色主題';
+      else btn.textContent='🎨 黑色主題';
     }
     // 清除舊版記憶，強制重新登入一次
     const ver=localStorage.getItem("mgmt_ver");
