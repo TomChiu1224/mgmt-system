@@ -28,6 +28,11 @@ input,select,textarea{border:1px solid var(--border);border-radius:var(--radius2
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,200,255,0.15);}
 select option{background:var(--bg3);}
 textarea{resize:vertical;min-height:80px;}
+/* 日期輸入框的日曆 icon 顏色 — 深色主題用白色 */
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.5);cursor:pointer;opacity:0.9;}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
+body.theme-white input[type="date"]::-webkit-calendar-picker-indicator{filter:none;}
+body.theme-warm input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.85) sepia(0.4) brightness(1.2);}
 
 /* Login */
 #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 50%,#0d2040 0%,var(--bg) 70%);}
